@@ -8,6 +8,7 @@ before_install:
   - sudo apt-get install libx11-dev libxt-dev gnome-devel
   - sudo apt-get install mpich
   - sudo apt-get install libncurses-dev xfonts-100dpi
+  - sudo apt-get install -y dpkg
   - pip install --upgrade pip
   - pip install scipy numpy matplotlib cython mpi4py neuronpy
   - curl -o nrn.deb https://neuron.yale.edu/ftp/neuron/versions/v7.6/nrn-7.6.x86_64-linux.deb
