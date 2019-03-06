@@ -3,13 +3,14 @@ cache: pip
 python:
   - "2.7"
   - "3.5"
-# command to install dependencies
-install:
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y rpm
   - curl -o nrn.rpm https://neuron.yale.edu/ftp/neuron/versions/v7.6/nrn-7.6.x86_64-linux.rpm
   - rpm --install nrn.rpm
-  - pip install -r requirements.txt
+install:
+  - pip install -r requirements.txt 
   - python setup.py develop
-# command to run tests
 script:
   - py.test --cov=hoc2swc tests/
 after_success:
