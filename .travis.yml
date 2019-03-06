@@ -4,15 +4,37 @@ python:
   - "2.7"
   - "3.5"
 before_install:
+  - start_dir=$(pwd)
   - sudo apt-get update
   - sudo apt-get install libx11-dev libxt-dev gnome-devel
   - sudo apt-get install mpich
   - sudo apt-get install libncurses-dev xfonts-100dpi
-  - sudo apt-get install -y dpkg
   - pip install --upgrade pip
   - pip install scipy numpy matplotlib cython mpi4py neuronpy
-  - curl -o nrn.deb https://neuron.yale.edu/ftp/neuron/versions/v7.6/nrn-7.6.x86_64-linux.deb
-  - sudo dpkg -i nrn.deb
+  - curl -o nrn.tar.gz https://neuron.yale.edu/ftp/neuron/versions/v7.5/nrn-7.5.tar.gz
+  - curl -o iv.tar.gz https://neuron.yale.edu/ftp/neuron/versions/v7.5/iv-19.tar.gz
+  - tar -xvzf nrn.tar.gz
+  - tar -xvzf iv.tar.gz
+  - rm *.tar.gz
+  - mkdir ~/neuron
+  - mv nrn-7.5 ~/neuron/nrn
+  - mv iv-19 ~/neuron/iv
+  - cd ~/neuron/iv
+  - ./configure --prefix=`pwd`
+  - make
+  - make install
+  - cd ~/neuron/nrn
+  - python_loc=$(which python)
+  - ./configure --prefix=`pwd` --with-iv=$HOME/neuron/iv --with-paranrn --with-nrnpython=$python_loc
+  - make
+  - make install
+  - export IV=$HOME/neuron/iv
+  - export N=$HOME/neuron/nrn
+  - export CPU=x86_64
+  - export PATH="$IV/$CPU/bin:$N/$CPU/bin:$PATH"
+  - cd ~/neuron/nrn/src/nrnpython/
+  - python setup.py install
+  - cd $start_dir
 install:
   - pip install -r requirements.txt
   - python setup.py develop
