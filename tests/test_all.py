@@ -6,7 +6,6 @@ def test_nonexistingHOC():
     with pytest.raises(Exception):
         hoc2swc.hoc2swc("XYZ/test.hoc", actual_swc)
 
-@pytest.mark.skipif("TRAVIS" in os.environ and os.environ["TRAVIS"] == "true", reason="Skipping test_python_CA1 test on Travis CI.")
 def test_python_CA1():
     actual_swc = "tests/testFiles/ca1/CA1-temp.swc"
     expected_swc = "tests/testFiles/ca1/CA1.swc"
