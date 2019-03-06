@@ -56,3 +56,9 @@ docs/_build/
 
 # PyBuilder
 target/
+
+\.idea/
+
+\.ipynb_checkpoints/
+
+tests/testFiles/ca1/x86_64/
