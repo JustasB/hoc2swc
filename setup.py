@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="hoc2swc",
-    version="0.1",
+    version="0.1.1",
     author="Justas Birgiolas",
     author_email="justas@asu.edu",
     description="Convert NEURON simulator .HOC files to .SWC morphology format",
