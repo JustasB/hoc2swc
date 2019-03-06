@@ -1,2 +1,2 @@
 pytest-cov
-python-coveralls
+codecov

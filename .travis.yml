@@ -1,3 +1,5 @@
+env:
+  - CODECOV_TOKEN="af0a6715-b675-4749-a6ce-9cf03f26a545"
 language: python
 cache: pip
 python:
@@ -41,4 +43,4 @@ install:
 script:
   - py.test --cov=hoc2swc tests/
 after_success:
-  - coveralls
+  - codecov
