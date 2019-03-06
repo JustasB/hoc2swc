@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.com/JustasB/hoc2swc.svg?branch=master)](https://travis-ci.com/JustasB/hoc2swc)
-[![Coverage Status](https://coveralls.io/repos/github/JustasB/hoc2swc/badge.svg?branch=master)](https://coveralls.io/github/JustasB/hoc2swc?branch=master)
+[![codecov](https://codecov.io/gh/JustasB/hoc2swc/branch/master/graph/badge.svg)](https://codecov.io/gh/JustasB/hoc2swc)
 [![PyPI version](https://badge.fury.io/py/hoc2swc.svg)](https://badge.fury.io/py/hoc2swc)
 
 # hoc2swc: A Python package to convert NEURON cell HOC files to SWC morphology files
