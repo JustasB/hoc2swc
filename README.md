@@ -29,6 +29,8 @@ Then, to convert a HOC file, run the following command in terminal (note the '-'
 
 `nrniv -python path/to/hoc2swc.py -path/to/cell.hoc -path/to/converted.swc`
 
+The command will start NEURON, load the HOC file, and convert it to SWC.
+
 ## If you compiled NEURON+Python
 
 To install the library, simply type in `pip install hoc2swc` in your terminal.
@@ -40,6 +42,10 @@ from hoc2swc import hoc2swc
 
 hoc2swc("path/to/cell.hoc", "out.swc")
 ```
+
+The command will start NEURON, load the HOC file, and convert it to SWC. NEURON is started in a separate process and the last line can be repeated multiple times to convert multiple HOC files.
+
+See the following Jupyter Notebook for a working example: [hoc2swc NEURON+Python Usage.ipynb](https://github.com/JustasB/hoc2swc/blob/master/hoc2swc%20NEURON%2BPython%20Usage.ipynb)
 
 ### Exporting non-HOC cells
 If a cell is not defined in a HOC file (e.g. defined using a custom script or using Python), you can instantiate the cell in NEURON and when it is ready for export to SWC, use the following Python script lines:
