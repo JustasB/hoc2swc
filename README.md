@@ -10,13 +10,21 @@ Once converted to SWC, tools that can consume SWC files can be used to [compute 
 
 # Requirements
 
-hoc2swc requires a working version of NEURON either installed from a [package/installer](https://www.neuron.yale.edu/neuron/download) (easier) or [compiled](https://neurojustas.com/2018/03/27/tutorial-installing-neuron-simulator-with-python-on-ubuntu-linux/) (more challenging). Linux, Mac, and Windows versions are supported.
+hoc2swc requires a working version of NEURON 7.5+ either installed from a [package/installer](https://www.neuron.yale.edu/neuron/download) (easier) or [compiled](https://neurojustas.com/2018/03/27/tutorial-installing-neuron-simulator-with-python-on-ubuntu-linux/) (more challenging). Linux, Mac, and Windows versions are supported.
 
 You must be able to run at least *one* of these commands in a terminal window without errors:
  - `nrniv -python`
  - Or `python -c 'from neuron import h'`
 
 If you cannot run any of these commands, it indicates that there is something amiss with your NEURON installation. Search the error messages on the [NEURON forum](https://www.neuron.yale.edu/phpBB/) for help.
+
+## MOD files
+The library assumes that the .mod files (mechanisms) used by the .hoc file are stored in the same
+directory as the .hoc file. You may need to place the .hoc and .mod files in the same folder before running this script.
+
+**Attention Windows users**: Once .mod and .hoc files are in the same location, the .mod files have to be compiled. Follow
+ these steps to [compile the .mod files on Windows](https://www.neuron.yale.edu/neuron/static/docs/nmodl/mswin.html#v51).
+ Linux and Mac users can skip this step, as the library will compile the .mod files automatically.
 
 # Installation and Usage
 
@@ -62,8 +70,22 @@ neuron2swc("out.swc")
 
 Note to packaged NEURON users, if you start `nrniv -python` from the directory where the hoc2swc.py file is located OR append the location to the PYTHONPATH environment variable, the above lines will work for you as well.
 
+# How it works
+Surprisingly, [there is no easy way to save cell morphologies built using NEURON as SWC files](https://www.neuron.yale.edu/phpBB/viewtopic.php?t=787). Which means, it's
+difficult to compute cell model morphology metrics using tools like [L-Measure](http://cng.gmu.edu:8080/Lm/), or use an [SWC viewer](https://neuroinformatics.nl/HBP/morphology-viewer/), which works with SWC
+files. It's possible to [import SWC files into NEURON](https://www.neuron.yale.edu/phpBB/viewtopic.php?t=3257), but not export.
+
+However, NEURON allows [saving cell morphology as NeuroML](https://www.neuron.yale.edu/phpBB/viewtopic.php?t=1926#p7019), which can be translated to SWC (this library does that). To do this, a cell model
+must be initialized ("loaded") within NEURON, and then all the initialized cells can be saved as NeuroML using ModelView.
+This library then parses the NeuroML file and translates it to SWC.
+
+While this approach requires a running instance of NEURON, it avoids the need to write a NEURON HOC file parser --
+it simply leverages NEURON's HOC parser and NeuroML exporter. As a side effect, this approach also allows converting 
+NEURON cell model morphologies to be convertable to SWC, even if HOC was not used to build the cell model (e.g. multiple 
+HOC files or a Python script).
+
 # Issues
-If you encounter an issues, first make sure it's not due to NEURON itself -- this library simply interacts with the NEURON executables. If it is, please contact the [NEURON team](https://www.neuron.yale.edu/phpBB/). If the issue is with this library, please create an [issue on Github](https://github.com/JustasB/hoc2swc/issues).
+If you encounter an issue, first make sure it's not due to NEURON itself -- this library simply interacts with the NEURON executables. If it is, please contact the [NEURON team](https://www.neuron.yale.edu/phpBB/). If the issue is with this library, please create an [issue on Github](https://github.com/JustasB/hoc2swc/issues).
 
 # Contributing
 
