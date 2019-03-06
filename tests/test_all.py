@@ -1,12 +1,12 @@
 import hoc2swc, os, pytest
 
-
 def test_nonexistingHOC():
     actual_swc = "tests/testFiles/ca1/CA1-temp.swc"
 
     with pytest.raises(Exception):
         hoc2swc.hoc2swc("XYZ/test.hoc", actual_swc)
 
+@pytest.mark.skipif("TRAVIS" in os.environ and os.environ["TRAVIS"] == "true", reason="Skipping test_python_CA1 test on Travis CI.")
 def test_python_CA1():
     actual_swc = "tests/testFiles/ca1/CA1-temp.swc"
     expected_swc = "tests/testFiles/ca1/CA1.swc"
@@ -15,19 +15,23 @@ def test_python_CA1():
 
     assert os.path.exists(actual_swc)
 
-    assert os.system("diff -w " + actual_swc + " " + expected_swc) == 0
-
+    try:
+        assert os.system("diff -w " + actual_swc + " " + expected_swc) == 0
+    finally:
+        os.system("rm " + actual_swc)
 
 def test_nrniv_CA1():
     actual_swc = "tests/testFiles/ca1/CA1-temp.swc"
     expected_swc = "tests/testFiles/ca1/CA1.swc"
 
-    import os
     os.system("nrniv -python hoc2swc.py -tests/testFiles/ca1/CA1.hoc -"+actual_swc)
 
     assert os.path.exists(actual_swc)
 
-    assert os.system("diff -w " + actual_swc + " " + expected_swc) == 0
+    try:
+        assert os.system("diff -w " + actual_swc + " " + expected_swc) == 0
+    finally:
+        os.system("rm " + actual_swc)
 
 if __name__ == "__main__":
-    test_CA1()
+    test_python_CA1()
