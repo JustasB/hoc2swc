@@ -3,13 +3,18 @@ cache: pip
 python:
   - "2.7"
   - "3.5"
-# command to install dependencies
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install libx11-dev libxt-dev gnome-devel
+  - sudo apt-get install mpich
+  - sudo apt-get install libncurses-dev xfonts-100dpi
+  - pip install --upgrade pip
+  - pip install scipy numpy matplotlib cython mpi4py neuronpy
+  - curl -o nrn.deb https://neuron.yale.edu/ftp/neuron/versions/v7.6/nrn-7.6.x86_64-linux.deb
+  - sudo dpkg -i nrn.deb
 install:
-  - curl -o nrn.rpm https://neuron.yale.edu/ftp/neuron/versions/v7.6/nrn-7.6.x86_64-linux.rpm
-  - rpm --install nrn.rpm
   - pip install -r requirements.txt
   - python setup.py develop
-# command to run tests
 script:
   - py.test --cov=hoc2swc tests/
 after_success:
