@@ -62,3 +62,5 @@ target/
 \.ipynb_checkpoints/
 
 tests/testFiles/ca1/x86_64/
+
+tests/testFiles/ca1/CA1-temp\.swc

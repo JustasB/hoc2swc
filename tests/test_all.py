@@ -17,7 +17,7 @@ def test_python_CA1():
     try:
         assert os.system("diff -w " + actual_swc + " " + expected_swc) == 0
     finally:
-        os.system("rm " + actual_swc)
+        pass #os.system("rm " + actual_swc)
 
 def test_nrniv_CA1():
     actual_swc = "tests/testFiles/ca1/CA1-temp.swc"
