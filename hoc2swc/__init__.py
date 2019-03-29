@@ -4,7 +4,7 @@ class TransientCWD:
     import os
 
     def __init__(self, new_cwd):
-        self.new_cwd = os.path.dirname(new_cwd)
+        self.new_cwd = os.path.abspath(os.path.dirname(new_cwd))
 
     def __enter__(self):
         # On start of indented block, save current working dir
@@ -17,7 +17,131 @@ class TransientCWD:
         # On end of indented block, revert back to prev working dir
         os.chdir(self.prev_cwd)
 
-def get_cell_template_name(hoc_path):
+class MorphologyPoint:
+    next_point_id = 1
+
+    def __init__(self, prox_dist_tag, nml_segment):
+        self.x = float(prox_dist_tag.attrib['x'])
+        self.y = float(prox_dist_tag.attrib['y'])
+        self.z = float(prox_dist_tag.attrib['z'])
+        self.diam = float(prox_dist_tag.attrib['diameter'])
+        self.radius = self.diam / 2.0
+
+
+        self.nml_segment = nml_segment
+
+        self.parent = None
+        self.id = self.get_next_id()
+        self.type = swc_type_from_section_name(nml_segment.name)
+
+        self.added = False
+
+    def get_next_id(self):
+        result = MorphologyPoint.next_point_id
+        MorphologyPoint.next_point_id += 1
+        return result
+
+    def same_as(self, other):
+        return (self.x == other.x and
+                self.y == other.y and
+                self.z == other.z and
+                self.diam == other.diam)
+
+    def __str__(self):
+        return str({'x':self.x,'y':self.y,'z':self.z,'d':self.diam,'id':self.id,'type':self.type,'added':self.added})
+
+class NmlSegment:
+    all_segments = {}
+
+    def __init__(self, segment_tag, schema):
+        self.name = segment_tag.attrib.get('name')
+        self.id = int(segment_tag.attrib.get('id'))
+        self.parent_id = int(segment_tag.attrib.get('parent')) if 'parent' in segment_tag.attrib else None
+
+        self.children = []
+        self.parent = self.link_parent()
+        self.all_segments[self.id] = self
+
+        prox, dist = segment_tag.findall(schema+'proximal'), segment_tag.findall(schema+'distal')
+
+        # Could have just proximal, no parent
+        # proximal and parent, both identical
+        # proximal and parent, both different
+        # just parent
+
+        # No parent
+        if self.parent_id is None:
+            # Has proximal
+            if prox:
+                self.proximal = MorphologyPoint(prox[0], nml_segment=self)
+            else:
+                raise Exception("In the NeuroML file, segment "+ str(self.id) +" has neither a parent nor a proximal element.")
+
+        # Has a parent
+        else:
+            # Just parent, no proximal
+            if not prox:
+                self.proximal = self.parent.distal
+
+            # Parent and proximal
+            else:
+                my_proximal = MorphologyPoint(prox[0], nml_segment=self)
+
+                # prox and parent distal are identical
+                if self.parent.distal.same_as(my_proximal):
+                    self.proximal = self.parent.distal
+
+                # not identical
+                else:
+                    self.proximal = my_proximal
+
+        self.distal = MorphologyPoint(dist[0], nml_segment=self)
+
+    def link_parent(self):
+        if self.parent_id is not None:
+            if self.parent_id not in self.all_segments:
+                raise Exception("In the NeuroML file, a segment "+ self.id +" refers to a non-existent parent segment: " + self.parent_id)
+            else:
+                parent = self.all_segments[self.parent_id]
+
+                if parent.id == self.id:
+                    raise Exception("In the NeuroML file, a segment " + self.id + " is its own parent.")
+
+                parent.children.append(self)
+
+                return parent
+
+        else:
+            return None
+
+    def get_child_SWC_points(self, swc_points = None):
+        if not swc_points:
+            swc_points = []
+
+        # Collect the points
+        self.add_point_to_SWC(self.proximal, swc_points)
+        self.add_point_to_SWC(self.distal, swc_points)
+
+        # Set the proximal point's parent point, if not set already and segment has a parent
+        if not self.proximal.parent and self.parent:
+            self.proximal.parent = self.parent.distal
+
+        self.distal.parent = self.proximal
+
+        for child_node in self.children:
+            child_node.get_child_SWC_points(swc_points)
+
+        return swc_points
+
+    def add_point_to_SWC(self, point, collection):
+        if not point.added:
+            collection.append(point)
+            point.added = True
+
+    def __str__(self):
+        return str({'id':self.id,'name':self.name,'parent':self.parent})
+
+def get_cell_template_names(hoc_path):
     '''
     Get the hoc cell template name
 
@@ -28,11 +152,14 @@ def get_cell_template_name(hoc_path):
     with open(hoc_path, 'r') as f:
         hoc_content = f.read()
 
-    hoc_template_name = re \
+    hoc_template_name_matches = re \
         .compile('begintemplate (.*)') \
-        .findall(hoc_content)[0]
+        .findall(hoc_content)
 
-    return hoc_template_name
+    if len(hoc_template_name_matches) > 0:
+        return hoc_template_name_matches
+    else:
+        return None
 
 def neuron2neuroml(nml_path):
     '''
@@ -41,6 +168,7 @@ def neuron2neuroml(nml_path):
     :param nml_path: The path to NeuroML file
     '''
     from neuron import h
+    h.define_shape()  # Handle models without h.xyz3d() data
     h.load_file('mview.hoc')
     modelView = h.ModelView(0)
     modelXml = h.ModelViewXML(modelView)
@@ -114,17 +242,25 @@ def hoc2neuroml(hoc_path, mod_path, swc_path):
         compile_mod()
         load_mod()
 
-    # Load the hoc file and instantiate the cell defined within
-    from neuron import h
+    # Load the hoc file
+    from neuron import h, gui
     h.load_file(hoc_path)
-    cell_name = get_cell_template_name(hoc_path)
-    cell = getattr(h, cell_name)()
+
+    # Check if the hoc file defines any templates
+    cell_names = get_cell_template_names(hoc_path)
+
+    if cell_names is not None:
+        cells = []
+
+        # Instantiate each defined template
+        for name in cell_names:
+            cells.append(getattr(h, name)())
 
     # Convert the instantiated cell files to NeuroML and then to SWC
     neuron2swc(swc_path)
 
 
-def neuron2swc(swc_path):
+def neuron2swc(swc_path, cleanup=True):
     # Convert NEURON instantiated cell morphology to NeuroML
     swc_dir = os.path.dirname(swc_path)
     nml_path = os.path.join(swc_dir, os.path.basename(swc_path) + ".nml")
@@ -134,140 +270,235 @@ def neuron2swc(swc_path):
     neuroml2swc(nml_path, swc_path)
 
     # Cleanup - remove NeuroML file
-    os.remove(nml_path)
+    if cleanup:
+        os.remove(nml_path)
 
+
+def swc_type_from_section_name(section_name):
+    '''
+    Returns an integer string of an SWC point type in response to a string name of a NEURON section.
+
+    See column 2 of http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html
+
+    To map custom section names to parts of SWC cell, override this method. E.g:
+
+    # Create a new name->type map
+    def new_map(section_name):
+        return "5" if "blah" in section_name else "1"
+
+    # Replace the default map with the new one. Subsequent hoc2swc statements will use the new map.
+    from hoc2swc import swc_type_from_section_name
+    swc_type_from_section_name.__code__ = new_map.__code__
+
+    :param section_name: name string of a NEURON section
+    :return: integer string e.g. "1" or "3" that corresponds to a SWC point type
+    '''
+
+    if "den" in section_name:
+        if "apical" in section_name:
+            return "4"
+
+        return "3"
+
+    if "axon" in section_name or "hillock" in section_name or "initial" in section_name:
+        return "2"
+
+    if "soma" in section_name:
+        return "1"
+
+    return "5"
+
+
+def swc_type_from_nml_segment_tag(seg_tag):
+    section_name = seg_tag.attrib["name"].lower()
+    return swc_type_from_section_name(section_name)
 
 def neuroml2swc(nml_path, swc_path, swap_yz=True):
+    import xml.etree.ElementTree, re
+
+    root = xml.etree.ElementTree.parse(nml_path).getroot()
+    cells = [e for e in root.findall(".//") if e.tag.endswith('cell')]
+
+    for c, cell in enumerate(cells):
+        # Extract the segment XML schema from the first cell segment tag
+        try:
+            first_seg = next(e for e in cell.findall(".//") if e.tag.endswith('segment'))
+        except:
+            raise Exception("Did not find any segments for the cell. This can sometimes happen if h.define_shape() was not executed first.")
+
+        seg_schema = re.compile('(\{.*\})').findall(first_seg.tag)[0]
+
+        # Get the list of all cell segments
+        seg_tags = cell.findall(".//"+seg_schema+"segment")
+
+        root_segment = None
+        MorphologyPoint.next_point_id = 1
+
+        # Parse the segments into a tree structure, keeping the root
+        for s, seg_tag in enumerate(seg_tags):
+            parsed_segment = NmlSegment(seg_tag, seg_schema)
+
+            if s == 0:
+                root_segment = parsed_segment
+
+
+        # Traverse the tree, depth-first to generate the list of SWC points
+        swc_points = root_segment.get_child_SWC_points()
+
+        if len(cells) == 1:
+            file_path = swc_path
+
+        else:
+            dir = os.path.dirname(swc_path)
+            file_stem, file_ext = os.path.splitext(os.path.basename(swc_path))
+            index = str(c).zfill(4)
+
+            file_path = os.path.join(dir, file_stem + "_" + index + file_ext)
+
+        with open(file_path, "w") as file:
+            for point in swc_points:
+                file.write(
+                    str(point.id) + " " +
+                    point.type + " " +
+                    str(point.x) + " " +
+                    (str(point.z) if swap_yz else str(point.y)) + " " +
+                    (str(point.y) if swap_yz else str(point.z)) + " " +
+                    str(point.radius) + " " +
+                    str(point.parent.id if point.parent else -1) + "\n")
+
+        print("Wrote cell "+str(c)+" to " + file_path)
+
+def neuroml2swcOLD(nml_path, swc_path, swap_yz=True):
     import xml.etree.ElementTree, re
     from collections import OrderedDict
 
     root = xml.etree.ElementTree.parse(nml_path).getroot()
+    cells = [e for e in root.findall(".//") if e.tag.endswith('cell')]
 
-    # Extract the XML schema from the first segment tag
-    first_seg = next(e for e in root.findall(".//") if e.tag.endswith('segment'))
-    schema = re.compile('(\{.*\})').findall(first_seg.tag)[0]
+    for c, cell in enumerate(cells):
+        # Extract the segment XML schema from the first cell segment tag
+        first_seg = next(e for e in cell.findall(".//") if e.tag.endswith('segment'))
+        seg_schema = re.compile('(\{.*\})').findall(first_seg.tag)[0]
 
-    # Get the list of all cell segments
-    seg_tags = root.findall(".//"+schema+"segment")
+        # Get the list of all cell segments
+        seg_tags = cell.findall(".//"+seg_schema+"segment")
 
-    # Treat each XYZ+D ending of a segment as separate "points"
-    neuroml_point_ids = {}
-    current_swc_id = 1
+        # Treat each XYZ+D ending of a segment as separate "points"
+        neuroml_point_ids = {}
+        current_swc_id = 1
 
-    for seg_tag in seg_tags:
-        proximal = seg_tag.findall(schema+'proximal')
-        distal   = seg_tag.findall(schema+'distal')
+        for seg_tag in seg_tags:
+            proximal = seg_tag.findall(seg_schema+'proximal')
+            distal   = seg_tag.findall(seg_schema+'distal')
 
-        for ending in [proximal, distal]:
-            if len(ending) > 0:
-                point_key = str(ending[0].attrib) # Ending's XYZ+D is its key
+            for ending in [proximal, distal]:
+                if len(ending) > 0:
+                    point_key = str(ending[0].attrib) # Ending's XYZ+D is its key
 
-                if point_key not in neuroml_point_ids:
-                    neuroml_point_ids[point_key] = str(current_swc_id)
-                    current_swc_id += 1
+                    if point_key not in neuroml_point_ids:
+                        neuroml_point_ids[point_key] = str(current_swc_id)
+                        current_swc_id += 1
 
-    # Store the swc ids of each distal ending
-    segment_distal_point_swc_ids = {}
+        # Store the swc ids of each distal ending
+        segment_distal_point_swc_ids = {}
 
-    for seg_tag in seg_tags:
-        distal = seg_tag.findall(schema+'distal')
-        segment_distal_point_swc_ids[seg_tag.attrib["id"]] = neuroml_point_ids[str(distal[0].attrib)]
+        for seg_tag in seg_tags:
+            distal = seg_tag.findall(seg_schema+'distal')
+            segment_distal_point_swc_ids[seg_tag.attrib["id"]] = neuroml_point_ids[str(distal[0].attrib)]
 
-    swc_points = OrderedDict()
+        swc_points = OrderedDict()
 
-    def get_type(seg_tag):
-        # Determine the SWC type of the segment.
-        # See column 2 of http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html
+        for tag in seg_tags:
+            parent_nml_id = tag.attrib.get('parent')
+            proximal = tag.findall(seg_schema+'proximal')
+            distal   = tag.findall(seg_schema+'distal')
 
-        seg_name = seg_tag.attrib["name"].lower()
+            # Segment has parent?
+            if parent_nml_id:
 
-        if "dend" in seg_name:
-            if "apical" in seg_name:
-                return "4"
+                # Has parent and proximal ending? Use proximal ending as point's parent
+                if proximal:
+                    parent_id = neuroml_point_ids[str(proximal[0].attrib)]
 
-            return "3"
+                    # If diameter of proximal is not the same as parent's distal - create proximal as separate point
+                    if parent_id not in swc_points:
+                        if parent_nml_id not in segment_distal_point_swc_ids:
+                            # WORKAROUND-START: NEURON has an off-by-one parent id bug. See: https://www.neuron.yale.edu/phpBB/viewtopic.php?f=20&t=4052
+                            alternative_parent_nml_id = str(int(parent_nml_id)+1)
+                            if alternative_parent_nml_id in segment_distal_point_swc_ids:
+                               parent_nml_id = alternative_parent_nml_id
+                            else:
+                            # WORKAROUND-END
+                                raise Exception("In the NeuroML file, a segment refers to non-existent parent segment: " + parent_nml_id)
 
-        if "axon" in seg_name:
-            return "2"
+                        swc_point = {
+                            "id": parent_id,
+                            "type": swc_type_from_nml_segment_tag(tag),
+                            "parent": segment_distal_point_swc_ids[parent_nml_id],
+                            "x": proximal[0].attrib["x"],
+                            "y": proximal[0].attrib["y"],
+                            "z": proximal[0].attrib["z"],
+                            "radius": str(float(proximal[0].attrib["diameter"]) / 2.0)
+                        }
 
-        if "soma" in seg_name:
-            return "1"
+                        swc_points[swc_point['id']] = swc_point
 
-        return "5"
+                # parent - no prox - use parent's distal as parent id
+                else:
+                    parent_id = segment_distal_point_swc_ids[parent_nml_id]
 
-    for tag in seg_tags:
-        parent_nml_id = tag.attrib.get('parent')
-        proximal = tag.findall(schema+'proximal')
-        distal   = tag.findall(schema+'distal')
-
-        # Segment has parent?
-        if parent_nml_id:
-
-            # Has parent and proximal ending? Use proximal ending as point's parent
-            if proximal:
-                parent_id = neuroml_point_ids[str(proximal[0].attrib)]
-
-                # If diameter of proximal is not the same as parent's distal - create proximal as separate point
-                if parent_id not in swc_points:
-                    if parent_nml_id not in segment_distal_point_swc_ids:
-                        raise Exception("In the NeuroML file, a segment refers to non-existent parent segment: " + parent_nml_id)
-
-                    swc_point = {
-                        "id": parent_id,
-                        "type": get_type(tag),
-                        "parent": segment_distal_point_swc_ids[parent_nml_id],
-                        "x": proximal[0].attrib["x"],
-                        "y": proximal[0].attrib["y"],
-                        "z": proximal[0].attrib["z"],
-                        "radius": str(float(proximal[0].attrib["diameter"]) / 2.0)
-                    }
-
-                    swc_points[swc_point['id']] = swc_point
-
-            # parent - no prox - use parent's distal as parent id
+            # no parent - add proximal, which will become distal's parent
             else:
-                parent_id = segment_distal_point_swc_ids[parent_nml_id]
+                swc_point = {
+                    "id": neuroml_point_ids[str(proximal[0].attrib)],
+                    "type": swc_type_from_nml_segment_tag(tag),
+                    "parent": "-1",
+                    "x": proximal[0].attrib["x"],
+                    "y": proximal[0].attrib["y"],
+                    "z": proximal[0].attrib["z"],
+                    "radius": str(float(proximal[0].attrib["diameter"]) / 2.0)
+                }
 
-        # no parent - add proximal, which will become distal's parent
-        else:
+                parent_id = swc_point["id"]
+
+                swc_points[swc_point['id']] = swc_point
+
+
+            # Always add distal
             swc_point = {
-                "id": neuroml_point_ids[str(proximal[0].attrib)],
-                "type": get_type(tag),
-                "parent": "-1",
-                "x": proximal[0].attrib["x"],
-                "y": proximal[0].attrib["y"],
-                "z": proximal[0].attrib["z"],
-                "radius": str(float(proximal[0].attrib["diameter"]) / 2.0)
+                "id": neuroml_point_ids[str(distal[0].attrib)],
+                "type": swc_type_from_nml_segment_tag(tag),
+                "parent": str(parent_id),
+                "x": distal[0].attrib["x"],
+                "y": distal[0].attrib["y"],
+                "z": distal[0].attrib["z"],
+                "radius": str(float(distal[0].attrib["diameter"]) / 2.0)
             }
-
-            parent_id = swc_point["id"]
 
             swc_points[swc_point['id']] = swc_point
 
+        if len(cells) == 1:
+            file_path = swc_path
 
-        # Always add distal
-        swc_point = {
-            "id": neuroml_point_ids[str(distal[0].attrib)],
-            "type": get_type(tag),
-            "parent": str(parent_id),
-            "x": distal[0].attrib["x"],
-            "y": distal[0].attrib["y"],
-            "z": distal[0].attrib["z"],
-            "radius": str(float(distal[0].attrib["diameter"]) / 2.0)
-        }
+        else:
+            dir = os.path.dirname(swc_path)
+            file_stem, file_ext = os.path.splitext(os.path.basename(swc_path))
+            index = str(c).zfill(4)
 
-        swc_points[swc_point['id']] = swc_point
+            file_path = os.path.join(dir, file_stem + "_" + index + file_ext)
 
-    with open(swc_path, "w") as file:
-        for point in swc_points.values():
-            file.write(
-                point["id"] + " " +
-                point["type"] + " " +
-                point["x"] + " " +
-                (point["z"] if swap_yz else point["y"]) + " " +
-                (point["y"] if swap_yz else point["z"]) + " " +
-                point["radius"] + " " +
-                point["parent"] + "\n")
+        with open(file_path, "w") as file:
+            for point in swc_points.values():
+                file.write(
+                    point["id"] + " " +
+                    point["type"] + " " +
+                    point["x"] + " " +
+                    (point["z"] if swap_yz else point["y"]) + " " +
+                    (point["y"] if swap_yz else point["z"]) + " " +
+                    point["radius"] + " " +
+                    point["parent"] + "\n")
+
+        print("Wrote cell "+str(c)+" to " + file_path)
 
 def hoc2swc(hoc_path, swc_path, mod_path=None, separate_process=True):
 
@@ -285,9 +516,11 @@ def hoc2swc(hoc_path, swc_path, mod_path=None, separate_process=True):
         proc.join()
         print('exit code', proc.exitcode)
         if proc.exitcode > 0:
-            raise Exception("Process crashed.")
+            raise Exception("NEURON process crashed. See above for error details.")
 
     else:
         hoc2neuroml(hoc_path, mod_path, swc_path)
 
-    print('Converted to SWC: ' + os.path.abspath(swc_path))
+
+
+

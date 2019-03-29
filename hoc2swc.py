@@ -1,7 +1,7 @@
 '''
 This file is intended to only be used when Python module of NEURON has not been installed.
 
-Usage should always be in this form: nrniv -python 'path/to/cell.hoc' 'path/to/out.swc'
+Usage should always be in this form: nrniv -python path/to/hoc2swc.py 'path/to/cell.hoc' 'path/to/out.swc'
 '''
 
 import os, sys
