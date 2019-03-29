@@ -55,8 +55,8 @@ The command will start NEURON, load the HOC file, and convert it to SWC. NEURON 
 
 See the following Jupyter Notebook for a working example: [hoc2swc NEURON+Python Usage.ipynb](https://github.com/JustasB/hoc2swc/blob/master/hoc2swc%20NEURON%2BPython%20Usage.ipynb)
 
-### Exporting non-HOC cells
-If a cell is not defined in a HOC file (e.g. defined using a custom script or using Python), you can instantiate the cell in NEURON and when it is ready for export to SWC, use the following Python script lines:
+### Exporting non-HOC or custom cells 
+If a cell is not defined in a HOC file (e.g. defined using a custom script or using Python) or requires special steps to load it, you can first instantiate the cell in NEURON and when it is ready for export to SWC, use the following Python script to save all instantiated cells to SWC.
 
 ```
 # Load your cell
@@ -64,7 +64,7 @@ from neuron import h
 run_scripts_build_cell_etc()
 
 # Export loaded cell to SWC
-from hoc2swc import neuron2swc
+from hoc2swc import neuron2swc # this function exports all loaded cells to SWC
 neuron2swc("out.swc")
 ```
 
@@ -73,7 +73,7 @@ Note to packaged NEURON users, if you start `nrniv -python` from the directory w
 # How it works
 Surprisingly, [there is no easy way to save cell morphologies built using NEURON as SWC files](https://www.neuron.yale.edu/phpBB/viewtopic.php?t=787). Which means, it's
 difficult to compute cell model morphology metrics using tools like [L-Measure](http://cng.gmu.edu:8080/Lm/), or use an [SWC viewer](https://neuroinformatics.nl/HBP/morphology-viewer/), which works with SWC
-files. It's possible to [import SWC files into NEURON](https://www.neuron.yale.edu/phpBB/viewtopic.php?t=3257), but not export.
+files. It's possible to [import SWC files into NEURON](https://www.neuron.yale.edu/phpBB/viewtopic.php?t=3257), but not export. There is [NLMorphologyConverter](http://www.neuronland.org/NLMorphologyConverter/NLMorphologyConverter.html), but none of the versions available were able to convert any of the HOC files I tested.
 
 However, NEURON allows [saving cell morphology as NeuroML](https://www.neuron.yale.edu/phpBB/viewtopic.php?t=1926#p7019), which can be translated to SWC. To do this, a cell model
 must be initialized ("loaded") within NEURON, and then all the initialized cells can be saved as NeuroML using ModelView.
