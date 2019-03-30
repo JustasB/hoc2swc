@@ -1,0 +1,75 @@
+//execute1("celltypes.element(\"TestCell\")")
+
+begintemplate TestCell
+public init, topol, basic_shape, subsets, geom, biophys, geom_nseg, biophys_inhomo
+public synlist, x, y, z, position, connect2target
+
+public soma, dend
+public all
+
+objref synlist
+
+proc init() {
+  topol()
+  subsets()
+  geom()
+  biophys()
+  geom_nseg()
+  synlist = new List()
+  synapses()
+  x = y = z = 0 // only change via position
+}
+
+create soma, dend[12]
+
+proc topol() { local i
+  connect dend(0), soma(0)
+  for i = 1, 11 connect dend[i](0), dend[i-1](1)
+  basic_shape()
+}
+proc basic_shape() {
+  soma {pt3dclear() pt3dadd(-59, 90, 0, 1) pt3dadd(-44, 120, 0, 1)}
+  dend {pt3dclear() pt3dadd(-59, 90, 0, 1) pt3dadd(-104, 90, 0, 1)}
+  dend[1] {pt3dclear() pt3dadd(-104, 90, 0, 1) pt3dadd(-149, 165, 0, 1)}
+  dend[2] {pt3dclear() pt3dadd(-149, 165, 0, 1) pt3dadd(-104, 210, 0, 1)}
+  dend[3] {pt3dclear() pt3dadd(-104, 210, 0, 1) pt3dadd(-59, 210, 0, 1)}
+  dend[4] {pt3dclear() pt3dadd(-59, 210, 0, 1) pt3dadd(15, 195, 0, 1)}
+  dend[5] {pt3dclear() pt3dadd(15, 195, 0, 1) pt3dadd(30, 150, 0, 1)}
+  dend[6] {pt3dclear() pt3dadd(30, 150, 0, 1) pt3dadd(60, 75, 0, 1)}
+  dend[7] {pt3dclear() pt3dadd(60, 75, 0, 1) pt3dadd(60, 0, 0, 1)}
+  dend[8] {pt3dclear() pt3dadd(60, 0, 0, 1) pt3dadd(-14, -29, 0, 1)}
+  dend[9] {pt3dclear() pt3dadd(-14, -29, 0, 1) pt3dadd(-89, -29, 0, 1)}
+  dend[10] {pt3dclear() pt3dadd(-89, -29, 0, 1) pt3dadd(-164, 15, 0, 1)}
+  dend[11] {pt3dclear() pt3dadd(-164, 15, 0, 1) pt3dadd(-194, 60, 0, 1)}
+}
+
+objref all
+proc subsets() { local i
+  objref all
+  all = new SectionList()
+    soma all.append()
+    for i=0, 11 dend[i] all.append()
+
+}
+proc geom() {
+}
+external lambda_f
+proc geom_nseg() {
+}
+proc biophys() {
+}
+proc biophys_inhomo(){}
+proc position() { local i
+  soma for i = 0, n3d()-1 {
+    pt3dchange(i, $1-x+x3d(i), $2-y+y3d(i), $3-z+z3d(i), diam3d(i))
+  }
+  x = $1  y = $2  z = $3
+}
+obfunc connect2target() { localobj nc //$o1 target point process, optional $o2 returned NetCon
+  soma nc = new NetCon(&v(1), $o1)
+  nc.threshold = 10
+  if (numarg() == 2) { $o2 = nc } // for backward compatibility
+  return nc
+}
+proc synapses() {}
+endtemplate TestCell
