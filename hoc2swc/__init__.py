@@ -20,16 +20,17 @@ class TransientCWD:
 class MorphologyPoint:
     next_point_id = 1
 
-    def __init__(self, prox_dist_tag, nml_segment):
-        self.x = float(prox_dist_tag.attrib['x'])
-        self.y = float(prox_dist_tag.attrib['y'])
-        self.z = float(prox_dist_tag.attrib['z'])
-        self.diam = float(prox_dist_tag.attrib['diameter'])
+    def __init__(self, i, h_section, h):
+        self.x = h.x3d(i, sec=h_section)
+        self.y = h.y3d(i, sec=h_section)
+        self.z = h.z3d(i, sec=h_section)
+        self.diam = h.diam3d(i, sec=h_section)
         self.radius = self.diam / 2.0
+        self.loc_along = h.arc3d(i, sec=h_section) / h_section.L
 
         self.parent = None
         self.id = self.get_next_id()
-        self.type = swc_type_from_section_name(nml_segment.name)
+        self.type = swc_type_from_section_name(h_section.name())
 
         self.added = False
 
@@ -48,20 +49,7 @@ class MorphologyPoint:
         return str({'x':self.x,'y':self.y,'z':self.z,'d':self.diam,'id':self.id,'type':self.type,'added':self.added})
 
 
-class NeuronMorphologyPoint(MorphologyPoint):
-    def __init__(self, i, h_section, h):
-        self.x = h.x3d(i, sec=h_section)
-        self.y = h.y3d(i, sec=h_section)
-        self.z = h.z3d(i, sec=h_section)
-        self.diam = h.diam3d(i, sec=h_section)
-        self.radius = self.diam / 2.0
-        self.loc_along = h.arc3d(i, sec=h_section)/h_section.L
 
-        self.parent = None
-        self.id = self.get_next_id()
-        self.type = swc_type_from_section_name(h_section.name())
-
-        self.added = False
 
 class NeuronSection:
 
@@ -69,7 +57,7 @@ class NeuronSection:
         self.name = h_section.name()
         self.nseg = h_section.nseg
 
-        self.points = [NeuronMorphologyPoint(i, h_section, h) for i in range(int(h.n3d(sec=h_section)))]
+        self.points = [MorphologyPoint(i, h_section, h) for i in range(int(h.n3d(sec=h_section)))]
         self.children = [NeuronSection(sec, h, self) for sec in h_section.children()]
 
         self.distal = self.points[-1]
