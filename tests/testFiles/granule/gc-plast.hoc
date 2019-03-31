@@ -1,0 +1,76 @@
+begintemplate GC
+
+public somagc, dend, synmt, priden, sampa, priden2
+
+create somagc, priden2[1], dend[2], priden
+
+objref synmt[1], sampa[1]
+
+proc init() {
+
+topol()
+geometry()
+segments()
+memb()
+
+}
+
+
+proc topol() {local i
+	connect priden(0), somagc(1)
+	connect priden2[0](0), priden(.8)
+	connect dend[0](0), dend[1](1)
+	connect dend[1](0), priden2[0](0.5)
+}
+
+proc segments() {local i
+	somagc.nseg= 1
+	forsec "priden" nseg = 10
+	forsec "dend" nseg = 1
+}
+
+proc geometry() {local i
+	somagc { L = 8  diam = 8}
+	dend[0] { L=1  diam=1}
+	dend[1] { L=2  diam=.2}
+	priden {L=150 diam=.5}
+	for i=0, 0 {priden2[i] {L=100 diam=.4}}
+	define_shape()
+}
+	
+
+
+proc memb() {
+	forall {
+		insert pas 
+		insert kamt gbar_kamt=0.008 ek=-90
+		insert nax gbar_nax=0.02 sh_nax=15 ena=60
+		Ra = 80
+		cm = 1
+		g_pas = 1/30000
+		e_pas = -65
+		ek = -90
+	}
+
+	forsec "soma" {
+		gbar_nax=0.04
+       		insert kdrmt gbar_kdrmt=0.006
+		gbar_kamt = 0.004
+		cm = 4
+		g_pas = cm/30000
+	}
+
+	forsec "pri" {
+		cm = 4
+		g_pas = cm/30000
+	}
+
+dend[0] {
+	synmt[0] = new nmdanet(1) 
+	sampa[0] = new ExpSyn(1)
+	sampa[0].e=0
+	sampa[0].tau=3
+	}
+}
+
+endtemplate GC

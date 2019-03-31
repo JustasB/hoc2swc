@@ -1,0 +1,281 @@
+load_file("nrngui.hoc")
+load_file("mitral-plast-2.hoc")
+load_file("gc-plast.hoc")
+use_mcell_ran4(1)
+mcell_ran4_init(125)
+cvode.active(1)
+
+Vrest = -65
+dt = 1
+celsius=35
+tstop=10000
+diff=0
+
+objref nconp[2], net, netp[2], g, b, synp, nil, stim, apc, time,mt0soma05, gc0dend0, gc33dend0, mt0dend066
+objref mt[2], gc[50], train[50], trainmt[2][50], outfile1, outfile2, outfile4
+objref outtracetime,outtracemt0,outtracegc0 ,outtracegc33,outtracemt0dend066
+objref nc[300], apc[50], apcmt[2][50], distrx, distry, distry2, sw
+double prev[50], sigmoid[50], prevmt[2][50], sigmoidmt[2][50]
+
+
+sw = new Random()
+sw.uniform(0, 25)
+
+strdef filename
+outfile1 = new File()
+outfile2 = new File()
+outfile4 = new File()
+outtracetime = new File()
+outtracemt0= new File()
+
+outtracegc0= new File()
+
+
+outtracegc33= new File()
+
+outtracemt0dend066= new File()
+
+distrx = new Vector()
+distry = new Vector()
+distry2 = new Vector()
+time = new Vector()
+mt0soma05 = new Vector()
+
+gc0dend0 = new Vector()
+
+
+gc33dend0= new Vector() 
+
+mt0dend066= new Vector() 
+
+outfile1.wopen("2mt-s1-w05-w00-e2i3-int220.txt")
+outfile2.wopen("2mt-s2-w05-w00-e2i3-int220.txt")
+outfile4.wopen("2mt-s4-w05-w00-e2i3-int220.txt")
+outtracetime.wopen("trace-time-w05-w00-e2i3-int220.txt")
+outtracemt0.wopen("trace-mt0soma05-w05-w00-e2i3-int220.txt")
+
+outtracegc0.wopen("trace-gc0dend0-w05-w00-e2i3-int220.txt")
+
+
+outtracegc33.wopen("trace-gc33dend0-w05-w00-e2i3-int220.txt")
+
+outtracemt0dend066.wopen("trace-mt0dend066-w05-w00-e2i3-int220.txt")
+
+
+
+
+for i=0, 1 {mt[i] = new Mitral()}
+
+for i=0, 49 {
+	gc[i] = new GC()
+
+	train[i] = new Vector()
+	gc[i].dend[0] apc[i] = new APCount(i*0.02)
+	apc[i].thresh=-40
+	apc[i].record(train[i])
+	prev[i]=0
+	sigmoid[i]=0//sw.repick()
+
+	trainmt[0][i] = new Vector()
+	mt[0].secden[1] apcmt[0][i] = new APCount(i*0.02)
+	apcmt[0][i].thresh=-40
+	apcmt[0][i].record(trainmt[0][i])
+	prevmt[0][i]=0
+	sigmoidmt[0][i]=0//sw.repick()
+
+	trainmt[1][i] = new Vector()
+	mt[1].secden[0] apcmt[1][i] = new APCount((49-i)*0.02)
+	apcmt[1][i].thresh=-40
+	apcmt[1][i].record(trainmt[1][i])
+	prevmt[1][i]=0
+	sigmoidmt[1][i]=0//sw.repick()
+
+	distrx.append(i)
+	//print i, sigmoid[i], sigmoidmt[0][i], sigmoidmt[1][i]
+}
+
+
+
+weight=0.5
+amp=.03
+rel=0.2
+inh=3
+synstr=2
+nmdafactor=0.0035
+
+
+
+for i=0, 1 {
+access mt[i].soma
+	distance()
+	netp[i] = new NetStim(0)
+	netp[i].number=200
+	netp[i].interval=220
+	netp[i].noise=0
+	netp[i].start=2
+}
+	nconp[0]= new NetCon(netp[0],mt[0].synodor,0.5,0,0.5*1.e-3) 
+	nconp[1]= new NetCon(netp[1],mt[1].synodor,0.5,0,0*1.e-3) 
+
+////////////////// circuit definition  
+
+///// gc <-> mt
+
+for z=0, 49 {
+
+mt[0].secden[1]	 nc[0+z*6]= new NetCon(&v(z*0.02),gc[z].synmt[0],-40,1,0*nmdafactor) 
+mt[0].secden[1]	 nc[1+z*6]= new NetCon(&v(z*0.02),gc[z].sampa[0],-40,1,0*1e-3) 
+gc[z].dend[0]	 nc[2+z*6]= new NetCon(&v(1),mt[0].igp[1][z],-40,1,0*inh*1e-3) 
+
+mt[1].secden[0]  nc[3+z*6]= new NetCon(&v((49-z)*0.02),gc[z].synmt[0],-40,1,0*nmdafactor) 
+mt[1].secden[0]	 nc[4+z*6]= new NetCon(&v((49-z)*0.02),gc[z].sampa[0],-40,1,0*1e-3) 
+gc[z].dend[0]    nc[5+z*6]= new NetCon(&v(1),mt[1].igp[0][49-z],-40,1,0*inh*1e-3) 
+
+}
+//stampa pesi nconp
+print nconp[0].weight,nconp[1].weight, inh, synstr
+////////////////// end circuit definition
+
+
+proc init() {
+	t=0
+	disp=50
+	finitialize(Vrest)
+        fcurrent()
+        forall {
+		v=Vrest
+		if (ismembrane("nax")) {e_pas=v+(ina+ik)/g_pas
+		} else {
+		e_pas=v+ik/g_pas
+		}
+	}
+	for z=0, 49 {
+	nc[2+z*6].weight=inh*1.e-3*plast(sigmoid[z])
+	nc[5+z*6].weight=inh*1.e-3*plast(sigmoid[z])
+	nc[0+z*6].weight=synstr*nmdafactor*plast(sigmoidmt[0][z])
+	nc[1+z*6].weight=synstr*1.e-3*plast(sigmoidmt[0][z])
+	nc[3+z*6].weight=synstr*nmdafactor*plast(sigmoidmt[1][z])
+	nc[4+z*6].weight=synstr*1.e-3*plast(sigmoidmt[1][z])
+	}
+	cvode.re_init()
+	
+	status()
+}
+
+proc advance() {
+	fadvance()
+	
+	for (z=0; z<=49; z=z+1) {
+	if (train[z].size()>=2 && train[z].size()>prev[z]) { 
+		prev[z]=train[z].size()
+		diff= train[z].x[train[z].size()-1]-train[z].x[train[z].size()-2]
+		if (diff>1000/4) {fact=0}
+		if (diff<1000/4 && diff>1000/30) {fact=-1}
+		if (diff<1000/30) {fact=1}
+		sigmoid[z]=sigmoid[z]+fact
+		if (sigmoid[z]<=0) {sigmoid[z]=0}
+		if (sigmoid[z]>=50) {sigmoid[z]=50}
+		nc[2+z*6].weight=inh*1.e-3*plast(sigmoid[z])
+		nc[5+z*6].weight=inh*1.e-3*plast(sigmoid[z])
+	outfile2.printf("%d %g %g %d %g\n", z, t, diff, sigmoid[z], nc[2+z*6].weight)
+//	print " GC ", t, z, prev[z], diff, fact, sigmoid[z], nc[2+z*6].weight
+	}
+
+	if (trainmt[0][z].size()>=2 && trainmt[0][z].size()>prevmt[0][z]) { 
+		prevmt[0][z]=trainmt[0][z].size()
+		diff= trainmt[0][z].x[trainmt[0][z].size()-1]-trainmt[0][z].x[trainmt[0][z].size()-2]
+		if (diff>1000/4) {fact=0}
+		if (diff<1000/4 && diff>1000/30) {fact=-1}
+		if (diff<1000/30) {fact=1}
+		sigmoidmt[0][z]=sigmoidmt[0][z]+fact
+		if (sigmoidmt[0][z]<=-10) {sigmoidmt[0][z]=-10}
+		if (sigmoidmt[0][z]>=60) {sigmoidmt[0][z]=60}
+		nc[0+z*6].weight=synstr*nmdafactor*plast(sigmoidmt[0][z])
+		nc[1+z*6].weight=synstr*1.e-3*plast(sigmoidmt[0][z])
+	outfile1.printf("%d %g %g %d %g\n", z, t, diff, sigmoidmt[0][z], nc[1+z*6].weight)
+//	print " MT0 ",t, z, 0, " ", prevmt[0][z], diff, fact, sigmoidmt[0][z], nc[1+z*6].weight
+	}
+
+	if (trainmt[1][z].size()>=2 && trainmt[1][z].size()>prevmt[1][z]) { 
+		prevmt[1][z]=trainmt[1][z].size()
+		diff= trainmt[1][z].x[trainmt[1][z].size()-1]-trainmt[1][z].x[trainmt[1][z].size()-2]
+		if (diff>1000/4) {fact=0}
+		if (diff<1000/4 && diff>1000/30) {fact=-1}
+		if (diff<1000/30) {fact=1}
+		sigmoidmt[1][z]=sigmoidmt[1][z]+fact
+		if (sigmoidmt[1][z]<=0) {sigmoidmt[1][z]=0}
+		if (sigmoidmt[1][z]>=50) {sigmoidmt[1][z]=50}
+		nc[3+z*6].weight=synstr*nmdafactor*plast(sigmoidmt[1][z])
+		nc[4+z*6].weight=synstr*1.e-3*plast(sigmoidmt[1][z])
+	outfile4.printf("%d %g %g %d %g\n", z, t, diff, sigmoidmt[1][z], nc[4+z*6].weight)
+//	print "MT1 ",t, z, 1, " ", prevmt[1][z], diff, fact, sigmoidmt[1][z], nc[4+z*6].weight
+	}
+	}
+
+	
+
+}
+
+proc run() {
+
+	
+	time.record(&t)
+	mt0soma05.record(&mt[0].soma.v(0.5))
+	
+	gc0dend0.record(&gc[0].dend[0].v(0.5))
+	
+	
+	gc33dend0.record(&gc[33].dend[0].v(0.5))
+	
+	mt0dend066.record(&mt[0].secden[1].v(0.66))
+	 
+
+	
+	stdinit()
+	
+	continuerun(tstop)
+	for(i=0; i<mt0soma05.size(); i=i+1){	
+		outtracetime.printf("%g \n", time.x[i])
+		outtracemt0.printf("%g \n",mt0soma05.x[i])
+		
+		outtracegc0.printf("%g \n",gc0dend0.x[i])
+		
+	
+		outtracegc33.printf("%g \n", gc33dend0.x[i])
+		
+		outtracemt0dend066.printf("%g \n", mt0dend066.x[i])
+		
+		
+	}
+	outfile1.close()
+	outfile2.close()
+	outfile4.close()
+	
+	outtracetime.close()
+	outtracemt0.close()
+	
+	outtracegc0.close()
+	
+
+	outtracegc33.close()
+	
+	outtracemt0dend066.close()
+
+	
+
+}
+
+
+
+
+proc status() {
+
+	
+	cvode.event(t+250, "status()")
+}
+
+
+func plast() {
+	return (1-(1/(1+exp(($1-25)/3))))
+}
+run()

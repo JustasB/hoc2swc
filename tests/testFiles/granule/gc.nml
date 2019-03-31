@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<neuroml xmlns="http://morphml.org/neuroml/schema"
+    xmlns:mml="http://morphml.org/morphml/schema"
+    xmlns:meta="http://morphml.org/metadata/schema"
+    xmlns:bio="http://morphml.org/biophysics/schema"
+    xmlns:cml="http://morphml.org/channelml/schema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://morphml.org/neuroml/schema http://www.neuroml.org/NeuroMLValidator/NeuroMLFiles/Schemata/v1.8.1/Level3/NeuroML_Level3_v1.8.1.xsd"
+    name = "NeuroML Level 1 file exported from NEURON"
+    lengthUnits="micron">
+
+<meta:notes>NeuroML Level 1 file generated from ModelView by: NEURON -- VERSION 7.5 master (6b4c19f) 2017-09-25
+Authors: Michael Hines, Sushil Kambampati and Padraig Gleeson,
+Yale University and UCL</meta:notes>
+
+<cells>
+  <cell name="GC_0">
+    <meta:notes>Cell: GC_0 exported from NEURON ModelView</meta:notes>
+    <segments  xmlns="http://morphml.org/morphml/schema"> <!-- Changing the namespace from neuroml to morphml-->
+<!-- Section: GC[0].somagc which has 3 3D points, so 2 segment(s)-->
+      <segment id="0" name = "Seg0_somagc" cable = "0">
+        <proximal x="0" y="0" z="0" diameter="8"/>
+        <distal x="4" y="0" z="0" diameter="8"/>
+      </segment>
+      <segment id="2" name = "Seg1_somagc" parent="0" cable = "0">
+        <distal x="8" y="0" z="0" diameter="8"/>
+      </segment>
+<!-- Section: GC[0].priden which has 3 3D points, so 2 segment(s)-->
+      <segment id="7" name = "Seg0_priden" parent="2" cable = "3">  <!-- Parent section: GC[0].somagc -->
+        <proximal x="8" y="0" z="0" diameter="0.5"/>
+        <distal x="83" y="0" z="0" diameter="0.5"/>
+      </segment>
+      <segment id="8" name = "Seg1_priden" parent="7" cable = "3">
+        <distal x="158" y="0" z="0" diameter="0.5"/>
+      </segment>
+<!-- Section: GC[0].priden2[0] which has 3 3D points, so 2 segment(s)-->
+      <segment id="9" name = "Seg0_priden2_0" parent="7" cable = "4">  <!-- Connected at 0.8 on parent section: GC[0].priden  -->
+        <proximal x="128" y="0" z="0" diameter="0.4"/>
+        <distal x="128" y="50" z="0" diameter="0.4"/>
+      </segment>
+      <segment id="10" name = "Seg1_priden2_0" parent="9" cable = "4">
+        <distal x="128" y="100" z="0" diameter="0.4"/>
+      </segment>
+<!-- Section: GC[0].dend[1] which has 3 3D points, so 2 segment(s)-->
+      <segment id="5" name = "Seg0_dend_1" parent="8" cable = "2">  <!-- Connected at 0.5 on parent section: GC[0].priden2[0]  -->
+        <proximal x="128" y="50" z="0" diameter="0.2"/>
+        <distal x="127" y="50" z="0" diameter="0.2"/>
+      </segment>
+      <segment id="6" name = "Seg1_dend_1" parent="5" cable = "2">
+        <distal x="126" y="50" z="0" diameter="0.2"/>
+      </segment>
+<!-- Section: GC[0].dend[0] which has 3 3D points, so 2 segment(s)-->
+      <segment id="3" name = "Seg0_dend_0" parent="6" cable = "1">  <!-- Parent section: GC[0].dend[1] -->
+        <proximal x="126" y="50" z="0" diameter="1"/>
+        <distal x="125.5" y="50" z="0" diameter="1"/>
+      </segment>
+      <segment id="4" name = "Seg1_dend_0" parent="3" cable = "1">
+        <distal x="125" y="50" z="0" diameter="1"/>
+      </segment>
+    </segments>
+    <cables  xmlns="http://morphml.org/morphml/schema"> <!-- Changing namespace from neuroml to morphml-->
+      <cable id = "0" name = "somagc" fract_along_parent = "0"/>
+      <cable id = "3" name = "priden">
+        <meta:properties>
+          <meta:property>
+            <meta:tag>numberInternalDivisions</meta:tag> <!-- Discetization of model at time of export. Can be overridden by importing application-->
+            <meta:value>10</meta:value>
+          </meta:property>
+        </meta:properties>
+      </cable>
+      <cable id = "4" name = "priden2_0" fract_along_parent = "0.8">
+        <meta:properties>
+          <meta:property>
+            <meta:tag>numberInternalDivisions</meta:tag> <!-- Discetization of model at time of export. Can be overridden by importing application-->
+            <meta:value>10</meta:value>
+          </meta:property>
+        </meta:properties>
+      </cable>
+      <cable id = "2" name = "dend_1" fract_along_parent = "0.5"/>
+      <cable id = "1" name = "dend_0"/>
+      <cablegroup name="all"> <!-- Replacing subset name ModelViewParmSubset_0 with all, as it contains all sections -->
+        <cable id = "0"/>
+        <cable id = "3"/>
+        <cable id = "4"/>
+        <cable id = "2"/>
+        <cable id = "1"/>
+      </cablegroup>
+      <cablegroup name="ModelViewParmSubset_1"> 
+        <cable id = "0"/>
+      </cablegroup>
+      <cablegroup name="ModelViewParmSubset_2"> 
+        <cable id = "2"/>
+        <cable id = "1"/>
+      </cablegroup>
+      <cablegroup name="ModelViewParmSubset_3"> 
+        <cable id = "0"/>
+        <cable id = "3"/>
+        <cable id = "4"/>
+      </cablegroup>
+      <cablegroup name="ModelViewParmSubset_4"> 
+        <cable id = "3"/>
+        <cable id = "4"/>
+        <cable id = "2"/>
+        <cable id = "1"/>
+      </cablegroup>
+      <cablegroup name="OneSecGrp_SectionRef_1"> <!-- Creating a group containing a single section: GC[0].somagc... -->
+        <cable id = "0"/>
+      </cablegroup>
+    </cables>
+  </cell>
+</cells>
+</neuroml>

@@ -68,3 +68,7 @@ tests/testFiles/ca1/CA1-temp\.swc
 tests/testFiles/synthetic/TestCell-temp\.swc
 
 tests/testFiles/synthetic/x86_64/
+
+tests/testFiles/granule/x86_64/
+
+tests/testFiles/multi-granule/x86_64/

@@ -1,0 +1,122 @@
+begintemplate Mitral
+
+// ls - long secondary dendrites 
+
+public soma, priden, secden, tuftden, hillock, initialseg
+public dendritic, somatic, second, somden, synodor, isynpg
+public dampa, igp
+
+
+create soma, priden, secden[2], tuftden, hillock, initialseg
+
+forall {Ra = 150}
+
+objref dendritic, somatic, somden, synodor
+objref igp[2][50]
+
+proc init() {
+
+dendritic = new SectionList()
+forsec "priden" dendritic.append()
+forsec "secden" dendritic.append()
+forsec "tuftden" dendritic.append()
+
+somatic = new SectionList()
+soma somatic.append
+hillock somatic.append
+
+somden = new SectionList()
+forsec somatic somden.append()
+forsec dendritic somden.append()
+
+topol()
+segments()
+geometry()
+memb()
+
+}
+
+
+proc topol() {local i
+	connect secden[0](0), soma(.5)
+	connect secden[1](0), soma(.5)
+	connect priden(0), soma(1)
+	connect tuftden(0), priden(1)
+
+	connect hillock(0), soma(0)
+	connect initialseg(0), hillock(1)
+}
+
+proc segments() {local i
+	soma.nseg= 1
+	priden.nseg = 5
+	forsec "tuftden" nseg = 10
+	forsec "secden" nseg = 50
+	initialseg.nseg = 3
+	hillock.nseg = 3
+}
+
+proc geometry() {local i
+	soma { L = 25  diam = 20 }
+	priden { L = 300  diam = 3 }
+	forsec "tuftden" {rallbranch=20 L=300  diam(0:1)=.4:.4 }
+	forsec "secden" { L=500  diam=2 }
+	initialseg{ L=30  diam=1.5}
+	hillock { L=5  diam(0:1) = soma.diam(0) : initialseg.diam(0) }
+	define_shape()
+}
+	
+
+
+proc memb() {
+	forall {insert pas}
+	forsec somden {
+		insert nax  insert kamt insert kdrmt
+		ek = -90
+		ena = 50
+		gbar_nax = 0.04 sh_nax=10
+	 	gbar_kdrmt = 0.0001
+		gbar_kamt = 0.004
+		}
+
+	forall {Ra = 150}
+
+	totarea=0
+	forall {
+		cm = 1.8
+		g_pas = 1/12000
+		e_pas = -65
+	}
+
+	initialseg {
+		insert nax  insert kamt insert kdrmt
+		ek = -90
+		ena = 50
+	        g_pas = 1/1000
+	        gbar_nax = 0.8
+		sh_nax = 0
+	        gbar_kamt = 0.08
+	        gbar_kdrmt = 0.0001
+	}       
+
+  
+	tuftden {
+	synodor = new Exp2Syn(.2)
+	synodor.e=0
+	synodor.tau1 = 20
+	synodor.tau2 = 200
+
+}
+
+for i=0, 1 secden[i] {
+	for j=0, 49 {
+		igp[i][j] = new Exp2Syn(j*.02)
+		igp[i][j].e=-80
+		igp[i][j].tau1 = 1
+		igp[i][j].tau2 = 200
+	}
+}
+
+}
+
+endtemplate Mitral

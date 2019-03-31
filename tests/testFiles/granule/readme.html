@@ -1,0 +1,53 @@
+<html><pre>
+NEURON files from the paper:
+
+Learning mechanism for column formation in the olfactory bulb
+by M. Migliore, Carlo Inzirillo, Gordon M. Shepherd, 
+Front. Integr. Neurosci. (2007) 1:12. doi:10.3389/neuro.07.012.2007
+
+In the olfactory bulb, the processing units for odor discrimination
+are believed to involve dendrodendritic synaptic interactions between
+mitral and granule cells.  There is increasing anatomical evidence
+that these cells are organized in columns, and that the columns
+processing a given odor are arranged in widely distributed arrays.
+Experimental evidence is lacking on the underlying learning mechanisms
+for how these columns and arrays are formed.  We have used a
+simplified realistic circuit model to test the hypothesis that
+distributed connectivity can self-organize through an
+activity-dependent dendrodendritic synaptic mechanism.  The results
+point to action potentials propagating in the mitral cell lateral
+dendrites as playing a critical role in this mechanism, and suggest a
+novel and robust learning mechanism for the development of distributed
+processing units in a cortical structure.
+
+The traces shown in Fig.2 of the paper are produced by running
+2mc-w05-w00-e2i3-int220.hoc.  However, because the simulation is quite
+long, the output files are included in the distribution and read by
+plasticity-disp.hoc, that also allows the display of the time course
+for all dendrodendritic synapses.
+
+After the fig 2 button is pressed and the simulations have completed,
+the windows can have there axes adjusted similarly to the figures:
+
+<img src="./screenshot.jpg" alt="screenshot">
+
+Under unix systems:
+to compile the mod files use the command 
+nrnivmodl 
+and run the simulation hoc file with the command 
+nrngui mosinit.hoc
+
+Under Windows systems:
+to compile the mod files use the "mknrndll" command.
+A double click on the simulation file
+mosinit.hoc 
+will open the simulation window.
+
+Under MAC OS X:
+
+Drag and drop the plast folder onto the mknrndll icon in the NEURON
+application folder.  When the mod files are finished compiling drag
+and drop the mosinit.hoc file onto the nrngui icon.
+
+Questions on how to use this model
+should be directed to michele.migliore@pa.ibf.cnr.it

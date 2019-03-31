@@ -1,0 +1,749 @@
+load_file("nrngui.hoc")
+
+objref b,b2,s1,f,b3,b4,b5,tr,tr1,tr2,tr3,e,final,ats1,ats2,ats4,b6,b7
+objref tracetime,tracemt0,tracegc0,tracegc33,tracemt0dend066
+objref outfile1, outfile2, outfile4, outtrace1, outtrace2,outtrace3,outtrace4,outtrace5
+objref index1,index2,index4,times1,times2,times4,timespikeints1,timespikeints2,timespikeints4,sinweights1,sinweights2,sinweights4,sigmoidmt0,sigmoidmt1,sigmoid,sigmoida
+
+objref distrs1,distrs2,distrs4,distryf,distrx,distrxs1, distrys1, distrxs2, distrys2, distrxs4, distrys4,distrts1,distrts2,distrts4
+objref sinindex,sinie,sintime,sin1,sin2,sin4,temp,temp1
+double nc[300],nc1[300],nct1[300],nct2[300],nct3[300],nct4[300]
+objref distrs1,distrs2,distrs4
+objref temptime,tracetimetemp,tracemt0temp,tracegc0temp,tracemt0d66temp,tracegc33temp
+objref obj
+
+
+obj=new StringFunctions()
+
+outfile1 = new File()
+outfile2 = new File()
+outfile4 = new File()
+
+outtrace1 = new File()
+outtrace2 = new File()
+outtrace3 = new File()
+outtrace4 = new File()
+outtrace5 = new File()
+
+
+
+index1 = new Vector()
+index2 = new Vector()
+index4 = new Vector()
+
+times1 = new Vector()
+times2 = new Vector()
+times4 = new Vector()
+
+timespikeints1 =new Vector()
+timespikeints2 =new Vector()
+timespikeints4 =new Vector()
+
+sigmoidmt0=new Vector()
+sigmoidmt1=new Vector()
+sigmoid=new Vector()
+
+sinweights1= new Vector()
+sinweights2= new Vector()
+sinweights4= new Vector()
+
+
+
+
+
+distrx = new Vector(50)
+distryf = new Vector()
+distrs1 = new Vector(50)
+distrs2 = new Vector(50)
+distrs4 = new Vector(50)
+
+distrxs1 = new Vector()
+distrys1 = new Vector()
+distrxs2 = new Vector()
+distrys2 = new Vector()
+distrxs4 = new Vector()
+distrys4 = new Vector()
+distrts1 = new Vector()
+distrts2 = new Vector()
+distrts4 = new Vector()
+
+func plast() {
+	return (1-(1/(1+exp(($1-25)/3))))
+}
+
+proc loadsyn(){
+	
+	strdef pt,pths1,pths2,pths4,ptht1,ptht2,ptht3,ptht4,ptht5,sig,pthin,pthres,pths1r,pths2r,pths4r,ptht1r,ptht2r,ptht3r,ptht4r,ptht5r
+	sig="sig"
+	
+	for (k=0;k<50;k=k+1){
+		nc1[1+k*6]=0
+		nc1[2+k*6]=0
+		nc1[4+k*6]=0
+		nc[1+k*6]=0
+		nc[2+k*6]=0
+		nc[4+k*6]=0
+		
+	}
+	
+	pthres=$s1
+	obj.right($s1,7)
+	
+	
+	obj.left($s1,obj.len($s1)-4)
+	pt=$s1
+	if(obj.substr(pthres,"r.") != -1){
+		print "restart"
+		obj.left($s1,obj.len($s1)-1)
+	}
+	print $s1
+	sprint(pths1,"2mt-s1-%s.txt",$s1)
+	sprint(pths2,"2mt-s2-%s.txt",$s1)
+	sprint(pths4,"2mt-s4-%s.txt",$s1)
+	sprint(ptht1,"trace-time-%s.txt",$s1)
+	sprint(ptht2,"trace-mt0soma05-%s.txt",$s1)
+	sprint(ptht3,"trace-gc0dend0-%s.txt",$s1)
+	sprint(ptht4,"trace-mt0dend066-%s.txt",$s1)
+	sprint(ptht5,"trace-gc33dend0-%s.txt",$s1)
+	
+
+	if(obj.substr($s1,"sig") != -1){
+		print "sig"
+		sprint(pthin,"%sinit.txt",$s1)
+		
+		dispin(pthin)
+		doNotify()
+		
+	}
+	
+	trace(ptht1,ptht2,ptht3,ptht4,ptht5)
+	load(pths1,pths2,pths4)
+	
+}
+
+proc trace(){
+	outtrace1.ropen($s1)
+	outtrace2.ropen($s2)
+	outtrace3.ropen($s3)
+	outtrace4.ropen($s4)
+	outtrace5.ropen($s5)
+	
+	
+	print "reading"
+	
+	tracesize=outtrace1.scanvar()
+	
+	temptime= new Vector()
+	tracetimetemp= new Vector()
+	tracemt0temp= new Vector()
+	tracegc0temp=new Vector()
+	tracemt0d66temp=new Vector()
+	tracegc33temp=new Vector()
+	
+	tracetime = new Vector(tracesize)
+	tracemt0 = new Vector(tracesize)
+	tracegc0 = new Vector(tracesize)
+	tracemt0dend066 = new Vector(tracesize)
+	tracegc33= new Vector(tracesize)
+	
+	tracetime.scanf(outtrace1,tracesize)
+	print "loaded trace1"
+	tracemt0.scanf(outtrace2,tracesize)
+	print "loaded trace2"
+	tracegc0.scanf(outtrace3,tracesize)
+	print "loaded trace3"
+	tracemt0dend066.scanf(outtrace4,tracesize)
+	print "loaded trace4"
+	tracegc33.scanf(outtrace5,tracesize)
+	print "loaded trace5"
+	print "loaded"
+	start=0
+}
+
+proc load(){
+	print " reading ...\n",$s1,"...\n",$s2,"...\n",$s3,"...\n"
+	outfile1.ropen($s1)
+	outfile2.ropen($s2)
+	outfile4.ropen($s3)
+	if (!outfile1.eof()){
+		outfile1.ropen($s1)
+		index1.scanf(outfile1, 1, 5)
+		outfile1.close()
+		outfile1.ropen($s1)
+		times1.scanf(outfile1, 2, 5)
+		outfile1.close()
+		outfile1.ropen($s1)
+		timespikeints1.scanf(outfile1, 3, 5)
+		outfile1.close()
+		outfile1.ropen($s1)
+		sigmoidmt0.scanf(outfile1, 4, 5)
+		outfile1.close()
+		outfile1.ropen($s1)
+		sinweights1.scanf(outfile1, 5, 5)
+		sigmoidmt0.apply("plast")
+		sigmoidmt0.mul(1.e-3)
+		sigmoidmt0.mul(synstr)
+		sigmoidmt0.div(2e-3)
+		print "loaded syn1"
+	} else {
+		index1.resize(0)
+		times1.resize(0)
+		timespikeints1.resize(0)
+		sinweights1.resize(0)
+		sigmoidmt0.resize(0)
+	}
+	if (!outfile2.eof()){
+		outfile2.ropen($s2)
+		index2.scanf(outfile2, 1, 5)
+		outfile2.close()
+		outfile2.ropen($s2)
+		times2.scanf(outfile2, 2, 5)
+		outfile2.close()
+		outfile2.ropen($s2)
+		timespikeints2.scanf(outfile2, 3, 5)
+		outfile2.close()
+		outfile2.ropen($s2)
+		sigmoid.scanf(outfile2, 4, 5)
+		outfile2.close()
+		outfile2.ropen($s2)
+		sinweights2.scanf(outfile2, 5, 5)
+		sigmoid.apply("plast")
+		sigmoid.mul(1.e-3)
+		sigmoid.mul(inh)
+		sigmoid.div(3e-3)
+		print "loaded syn2"
+	}else {
+		index2.resize(0)
+		times2.resize(0)
+		timespikeints2.resize(0)
+		sinweights2.resize(0)
+		sigmoid.resize(0)
+	}
+	if (!outfile4.eof()){
+		outfile4.ropen($s3)
+		index4.scanf(outfile4, 1, 5)
+		outfile4.close()
+		outfile4.ropen($s3)
+		times4.scanf(outfile4, 2, 5)
+		outfile4.close()
+		outfile4.ropen($s3)
+		timespikeints4.scanf(outfile4, 3, 5)
+		outfile4.close()
+		outfile4.ropen($s3)
+		sigmoidmt1.scanf(outfile4, 4, 5)
+		outfile4.close()
+		outfile4.ropen($s3)
+		sinweights4.scanf(outfile4, 5, 5)
+		sigmoidmt1.apply("plast")
+		sigmoidmt1.mul(1.e-3)
+		sigmoidmt1.mul(synstr)
+		print "loaded syn4"
+	} else {
+		index4.resize(0)
+		times4.resize(0)
+		timespikeints4.resize(0)
+		sinweights4.resize(0)
+		sigmoidmt1.resize(0)
+	}
+	sinsize=index1.size()+index2.size()+index4.size()
+	sin1=new Vector(index1.size())
+	sin2=new Vector(index2.size())
+	sin4=new Vector(index4.size())
+	sinie=new Vector()
+	sin1.add(1)
+	sin2.add(2)
+	sin4.add(4)
+	sinie.append(sin1)
+	sinie.append(sin2)
+	sinie.append(sin4)
+	sigmoida=new Vector()
+	sigmoida.append(sigmoidmt0)
+	sigmoida.append(sigmoid)
+	sigmoida.append(sigmoidmt1)
+	sinindex= new Vector()
+	sintime= new Vector()
+	
+	sinindex.append(index1)
+	sinindex.append(index2)
+	sinindex.append(index4)
+	sintime.append(times1)
+	sintime.append(times2)
+	sintime.append(times4)
+	temp=new Vector(sinsize)
+	temp=sintime.sortindex()
+	temp1=new Vector()
+	ind=0
+	for(i=0;i<temp.size();i=i+1){
+		while (tracetime.x[ind]<=sintime.x[temp.x[i]]){
+					ind=ind+1
+				}
+				temp1.append(ind)
+				
+		
+	}
+	print "loaded"
+}
+
+
+
+
+
+
+proc disp(){
+	
+	closeAll()
+	distrys1.resize(0)
+	distrxs1.resize(0)
+	distrts1.resize(0)
+	distrys2.resize(0)
+	distrxs2.resize(0)
+	distrts2.resize(0)
+	distrys4.resize(0)
+	distrxs4.resize(0)
+	distrts4.resize(0)
+	
+	
+	
+	b2= new VBox()
+	b2.intercept(1)
+	
+	
+	
+	xpanel("")
+	
+	xvalue("synapse")
+	
+	xbutton("display synapse", "disp1()")
+	
+	xpanel()
+	//xpanel("",1)
+	
+	
+	
+	s1 = new Graph()
+	
+	b2.intercept(0)
+	b2.map(pt, 0, 0, 240, 620)
+        disp1()
+}
+
+
+proc disp1(){	
+        
+	
+	s1.erase()
+	distrys1.resize(0)
+	distrxs1.resize(0)
+	distrts1.resize(0)
+	distrys2.resize(0)
+	distrxs2.resize(0)
+	distrts2.resize(0)
+	distrys4.resize(0)
+	distrxs4.resize(0)
+	distrts4.resize(0)
+	
+	
+	s1.size(0,10000, 0,1)
+	s1.xaxis(1)
+	s1.exec_menu("10% Zoom out")
+	s1.label(0.5,0.75," mitral->GC (exc)",2,1,0.4,0.4,1)
+	s1.label(0.5,0.70," GC->mitral (inh)",2,1,0.4,0.4,3)
+
+	for (i=0;i<index1.size();i=i+1){ 
+		
+		if (index1.x[i] == synapse){
+			
+			distrys1.append(sigmoidmt0.x[i])
+			distrxs1.append(times1.x[i])
+			
+		}
+	}
+	for (i=0;i<index2.size();i=i+1){ 
+			
+	
+		if (index2.x[i] == synapse){
+			
+			
+			distrys2.append(sigmoid.x[i])
+			distrxs2.append(times2.x[i])
+			
+			
+		}
+	}
+	for (i=0;i<index4.size();i=i+1){ 
+		if (index4.x[i] == synapse){
+			distrys4.append(sigmoidmt1.x[i])
+			distrxs4.append(times4.x[i])
+		}
+		
+	}
+	
+	distrys1.line(s1,distrxs1,1,2)
+	distrys2.line(s1,distrxs2,3,2)
+//	distrys4.mark(s1,distrxs4,"O",6,2)
+	s1.flush()
+	
+}
+
+
+
+proc evolution(){
+	closeAll()
+	for k=0,49{
+		distrs1.x[k]=nc1[1+k*6]
+		distrs2.x[k]=nc1[2+k*6]
+		distrs4.x[k]=nc1[4+k*6]
+		
+		
+		distrx.x[k]=k*10
+	}
+	go=0
+	bool=0
+	bool1=0
+        start=0
+	skip=30
+	b4=new VBox()
+	b4.intercept(1)
+	tr=new Graph()
+	
+	b4.intercept(0)
+	b4.map("mt soma (Fig.2b)",0,0,300,200)
+	
+	b6=new VBox()
+	b6.intercept(1)
+	tr2=new Graph()
+	
+	b6.intercept(0)
+	b6.map("mt0 dend (Fig.2c)",820,0,300,200)
+	
+	
+	b3 = new VBox()
+	b3.intercept(1)
+	
+	
+	tr.size(0,10000,-70, 50)
+	
+	xpanel("",1)
+	e = new Graph()
+	e.size(0,50,0,1)
+	e.erase()
+	
+	interval=500
+	time=0
+	xvalue("time")
+	xvalue("skip")
+	xvalue("time window", "interval")
+        xbutton("play", "play()")
+	xbutton("pause", "pause()")
+        xbutton("close", "closeEvol()")
+	xpanel()
+	b3.intercept(0)
+	b3.map(pt)
+	b5=new HBox()
+	b5.intercept(1)
+	tr1=new Graph()
+	
+	
+	
+	b5.intercept(0)
+	b5.map("gc (Fig.2b)",0,540,300,200)
+	
+	b7=new HBox()
+	b7.intercept(1)
+	
+	tr3=new Graph()
+	
+	
+	b7.intercept(0)
+	b7.map("gc (Fig.2c)",820,540,300,200)
+	tr1.size(0,10000,-70, 50)
+	tr.label(5000, 30, "mt0")
+	tr2.label(5000, 30, "mt0dend66")
+	tr1.label(5000, 30, "gc0")
+	tr3.label(5000, 30, "gc33")
+	tr2.size(0,10000,-70, 50)
+	tr3.size(0,10000,-70, 50)
+	tr.xaxis(3)
+	tr1.xaxis(3)
+	tr2.xaxis(3)
+	tr3.xaxis(3)
+
+	distrs1.mark(e,distrx,"S",9,1)
+	distrs2.mark(e,distrx,"O",6,3)
+	play()
+}
+
+proc pause(){
+	
+	bool=1
+	bool1=0
+	
+}
+
+proc play(){
+
+bool1=bool1+1
+if (bool1 < 2 && bool == 0){
+
+	
+	
+
+for (i=go;i<sintime.size();i=i+1){
+		
+		time=sintime.x[temp.x[i]]
+		
+		if (sinie.x[temp.x[i]]==1){
+			index=sinindex.x[temp.x[i]]
+			peso=sigmoida.x[temp.x[i]]
+			
+			distrs1.x[index]=peso
+			
+			
+		}
+		if (sinie.x[temp.x[i]]==2){
+			index=sinindex.x[temp.x[i]]
+			peso=sigmoida.x[temp.x[i]]
+			
+			distrs2.x[index]=peso
+			
+		}
+		if (sinie.x[temp.x[i]]==4){
+			index=sinindex.x[temp.x[i]]
+			peso=sigmoida.x[temp.x[i]]
+		
+			distrs4.x[index]=peso
+			
+		}
+		 
+
+		if ((i-(int(i/skip)*skip)) == 0 ){
+	
+		tracedisp(i)
+		dispevol()
+		doNotify()
+		} 
+		
+		if(i==sintime.size()-1){
+			dispevol()
+			doNotify()
+			for k=0,49{
+				distrs1.x[k]=nc1[1+k*6]
+				distrs2.x[k]=nc1[2+k*6]
+				distrs4.x[k]=nc1[4+k*6]
+				start=0
+			    tracetimetemp.resize(0)
+				tracemt0temp.resize(0)
+	
+				tracemt0temp.resize(0)
+				tracegc0temp.resize(0)
+				tracemt0d66temp.resize(0)
+				tracegc33temp.resize(0)
+			}
+			go=0
+                        bool1=0
+			print go
+		}
+		if(bool==1){
+			bool=0
+                        
+			go=i
+			i=sintime.size()-1
+			print go
+		}
+
+	}
+	}
+
+}
+
+proc tracedisp() {	
+	
+	
+	
+	
+	tr.size(tracetime.x[start]-interval,tracetime.x[temp1.x[$1]], -70,50)
+	tr1.size(tracetime.x[start]-interval,tracetime.x[temp1.x[$1]], -70,50)
+	tr2.size(tracetime.x[start]-interval,tracetime.x[temp1.x[$1]], -70,50)
+	tr3.size(tracetime.x[start]-interval,tracetime.x[temp1.x[$1]], -70,50)
+	
+	tr.flush
+	tr1.flush
+	tr2.flush
+	tr3.flush
+	
+	tracetimetemp=tracetime.at(start,temp1.x[$1])
+	tracemt0temp=tracemt0.at(start,temp1.x[$1])
+	tracetimetemp=tracetime.at(start,temp1.x[$1])
+	tracemt0temp=tracemt0.at(start,temp1.x[$1])
+	tracegc0temp=tracegc0.at(start,temp1.x[$1])
+	tracemt0d66temp=tracemt0dend066.at(start,temp1.x[$1])
+	tracegc33temp=tracegc33.at(start,temp1.x[$1])
+	
+	
+	tracemt0temp.line(tr,tracetimetemp,1,0)
+	tracegc0temp.line(tr1,tracetimetemp,1,0)
+	tracemt0d66temp.line(tr2,tracetimetemp,1,0)
+	tracegc33temp.line(tr3,tracetimetemp,1,0)
+	
+	start=temp1.x[$1]
+	
+}
+
+proc dispevol() {
+	
+	e.size(0,500,0,1)
+	e.erase()
+	e.mark(0,0.0005, "T", 15, 2, 2)
+//	e.mark(500,0.0005, "T", 15, 2, 2)
+	e.color(2)
+	e.beginline()
+	e.line(0, 0.0005)
+	e.line(500, 0.2)
+//	e.beginline()
+//	e.line(500, 0.0005)
+//	e.line(-5, 0.001)
+
+	distrs1.mark(e,distrx,"S",9,1)
+	distrs2.mark(e,distrx,"O",6,3)
+	
+	e.flush
+	
+}
+
+proc dispfinal(){
+	closeAll()
+	j=0
+	end=0
+	end1=0
+	end2=0
+	end3=0
+	while(end<3){
+		if(j<index1.size()){
+			
+			nc[1+index1.x[j]*6]=sigmoidmt0.x[j]
+			
+		}else{
+			end1=1
+		}
+		if (j<index2.size()){
+			
+			nc[2+index2.x[j]*6]=sigmoid.x[j]
+			
+		}else{
+			end2=1
+		}
+		if (j<index4.size()){
+			
+			nc[4+index4.x[j]*6]=sigmoidmt1.x[j]
+			
+		}else{
+			end3=1
+		}
+		end=end1+end2+end3
+		j=j+1
+	}
+	final = new Graph()
+	final.size(0,500,0,1)
+	final.erase()
+	final.mark(0,0.0005, "T", 15, 2, 2)
+	final.mark(500,0.0005, "T", 15, 2, 2)
+	final.color(2)
+	final.beginline()
+	final.line(0, 0.0005)
+	final.line(500, 0.2)
+	final.beginline()
+	final.line(500, 0.0005)
+	final.line(-5, 0.001)
+	
+   
+	distryf.resize(0)
+	
+	for k=0, 49 {
+		distryf.append(nc[1+k*6])
+		distrx.x[k]=k*10
+	}
+	distryf.mark(final,distrx,"S",9,1)
+	final.flush()
+
+	
+	distryf.resize(0)
+	for k=0, 49 {distryf.append(nc[4+k*6]) }
+	distryf.mark(final,distrx,"O",6,2)
+	final.flush()
+	
+	
+	distryf.resize(0)
+	for k=0, 49 {distryf.append(nc[2+k*6])}
+	distryf.mark(final,distrx,"O",6,3)
+	final.flush()
+    
+	
+	
+	
+	
+}
+
+proc closeAll(){
+	objref b2,b3,b4,b5,b6,b7,final
+	
+}
+
+proc closeEvol(){
+
+	b3.unmap()
+	b4.unmap()
+	b5.unmap()
+	b6.unmap()
+	b7.unmap()
+
+}
+
+func max(){
+	if ($1 >= $2){
+		return ($1)
+	}else{
+		return ($2)
+	}
+
+}
+
+weight=0.5
+amp=.03
+rel=0.2
+inh=3
+synstr=2
+nmdafactor=0.0035
+tracesize=0
+b = new VBox()
+b.intercept(1)
+
+strdef path1
+	
+loadsyn("2mt-s1-w05-w00-e2i3-int220.txt")
+
+xpanel("")
+xvarlabel(pths1)
+xvarlabel(pths2)
+xvarlabel(pths4)
+
+go=0
+synapse=33
+box=-1
+xvalue("synapse")
+xbutton("synapse time course ", "disp()")
+xbutton("traces and weights, Fig. 2b-c","evolution()")
+xbutton("final weights", "dispfinal()")
+
+xpanel()
+
+
+
+b.intercept(0)
+b.map(pt)
+//evolution()
+
+outfile1.close()
+outfile2.close()
+outfile4.close()
+
+

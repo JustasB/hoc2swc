@@ -26,7 +26,7 @@ class MorphologyPoint:
         self.z = round(h.z3d(i, sec=h_section), 3)
         self.diam = round(h.diam3d(i, sec=h_section), 3)
         self.radius = self.diam / 2.0
-        self.loc_along = round(h.arc3d(i, sec=h_section) / h_section.L)
+        self.loc_along = h.arc3d(i, sec=h_section) / h_section.L
 
         self.parent = None
         self.id = self.get_next_id()
@@ -39,18 +39,6 @@ class MorphologyPoint:
         MorphologyPoint.next_point_id += 1
         return result
 
-    def same_as(self, other):
-        return (self.x == other.x and
-                self.y == other.y and
-                self.z == other.z and
-                self.diam == other.diam)
-
-    def __str__(self):
-        return str({'x':self.x,'y':self.y,'z':self.z,'d':self.diam,'id':self.id,'type':self.type,'added':self.added})
-
-
-
-
 class NeuronSection:
 
     def __init__(self, h_section, h, parent_NeuronSection = None):
@@ -62,9 +50,6 @@ class NeuronSection:
 
         self.distal = self.points[-1]
         self.proximal = self.points[0]
-
-        if len(self.points) < 2:
-            raise Exception("Section " + self.name + " has less than two 3D points.")
 
         if parent_NeuronSection:
             self.parent = parent_NeuronSection
@@ -107,9 +92,6 @@ class NeuronSection:
         return swc_points
 
     def parent_point(self):
-        if not self.parent:
-            return None
-
         return self.parent.point_closest_to(self.loc_along_parent)
 
     def point_closest_to(self, loc):
@@ -123,7 +105,7 @@ class NeuronSection:
         elif loc == 0.0:
             min_i = 0
 
-        # Otherwise, find the 3d point with the nearest arc fraction to the desirec fraction
+        # Otherwise, find the 3d point with the nearest arc fraction to the desired fraction
         else:
             for i, point in enumerate(self.points):
                 dist = abs(point.loc_along - loc)
@@ -139,9 +121,6 @@ class NeuronSection:
         if not point.added:
             collection.append(point)
             point.added = True
-
-    def __str__(self):
-        return str({'id':self.id,'name':self.name,'parent':self.parent})
 
 
 def get_cell_template_names(hoc_path):
