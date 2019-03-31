@@ -21,12 +21,12 @@ class MorphologyPoint:
     next_point_id = 1
 
     def __init__(self, i, h_section, h):
-        self.x = h.x3d(i, sec=h_section)
-        self.y = h.y3d(i, sec=h_section)
-        self.z = h.z3d(i, sec=h_section)
-        self.diam = h.diam3d(i, sec=h_section)
+        self.x = round(h.x3d(i, sec=h_section), 3)
+        self.y = round(h.y3d(i, sec=h_section), 3)
+        self.z = round(h.z3d(i, sec=h_section), 3)
+        self.diam = round(h.diam3d(i, sec=h_section), 3)
         self.radius = self.diam / 2.0
-        self.loc_along = h.arc3d(i, sec=h_section) / h_section.L
+        self.loc_along = round(h.arc3d(i, sec=h_section) / h_section.L)
 
         self.parent = None
         self.id = self.get_next_id()

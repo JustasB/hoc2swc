@@ -38,3 +38,4 @@ def test_python_synthetic():
 
 if __name__ == "__main__":
     test_python_synthetic()
+    test_python_CA1()
