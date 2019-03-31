@@ -72,3 +72,9 @@ tests/testFiles/synthetic/x86_64/
 tests/testFiles/granule/x86_64/
 
 tests/testFiles/multi-granule/x86_64/
+
+tests/testFiles/multi-granule/gc-temp_0000\.swc
+
+tests/testFiles/multi-granule/gc-temp_0001\.swc
+
+tests/testFiles/granule/gc-temp\.swc
