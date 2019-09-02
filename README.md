@@ -4,7 +4,7 @@
 
 # hoc2swc: A Python package to convert NEURON cell HOC files to SWC morphology files
 
-[hoc2swc](https://pypi.org/project/hoc2swc/) is a Python library that converts the morphology of neuron models defined using [NEURON simulator](https://neuron.yale.edu) [HOC files](https://www.neuron.yale.edu/neuron/static/new_doc/programming/hocsyntax.html) to the popular [SWC morphology format](http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html). The library can also be used to convert cell morphologies instantiated in NEURON simulator (e.g. models that were build using NEURON+Python).
+[hoc2swc](https://pypi.org/project/hoc2swc/) is a Python library that converts the morphology of neuron models defined using [NEURON simulator](https://neuron.yale.edu) [HOC files](https://www.neuron.yale.edu/neuron/static/new_doc/programming/hocsyntax.html) to the popular [SWC morphology format](http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html). The library can also be used to convert cell morphologies instantiated in NEURON simulator (e.g. models that were built using NEURON+Python).
 
 Once converted to SWC, tools that can consume SWC files can be used to [compute SWC morphology metrics](https://pypi.org/project/pylmeasure/), create [professional 3D neuron morphology visualizations](https://github.com/MartinPyka/SWC2Blender), etc...
 
@@ -82,7 +82,7 @@ it simply leverages NEURON's HOC parser and h.xyzdiam3d() methods. As a side eff
 NEURON cell model morphologies to SWC, even if HOC was not used to build the cell model (e.g. multiple 
 HOC files or a Python script).
 
-In theory, one could perform the above steps and implement a NeuroML->SWC converter on their own. However, this library has been packaged and made freely available to reduce the above effort to just a few lines of code. If you find any bugs with this library, and were prepared to implement your own converter, consider fixing the bug and submitting a pull-request instead -- it might be faster to fix a bug here than to write the converter from scratch.
+In theory, one could perform the above steps and implement a Neuron->SWC converter on their own. However, this library has been packaged and made freely available to reduce the above effort to just a few lines of code. If you find any bugs with this library, and were prepared to implement your own converter, consider fixing the bug and submitting a pull-request instead -- it might be faster to fix a bug here than to write the converter from scratch.
 
 # Issues
 If you encounter an issue, first make sure it's not due to NEURON itself -- this library simply interacts with the NEURON executables. If it is, please contact the [NEURON team](https://www.neuron.yale.edu/phpBB/). If the issue is with this library, please create an [issue on Github](https://github.com/JustasB/hoc2swc/issues).
