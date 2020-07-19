@@ -78,3 +78,5 @@ tests/testFiles/multi-granule/gc-temp_0000\.swc
 tests/testFiles/multi-granule/gc-temp_0001\.swc
 
 tests/testFiles/granule/gc-temp\.swc
+
+tests/testFiles/no-begintemplate/NoTemplate-temp.swc
