@@ -191,25 +191,28 @@ def load_mod():
             pass
 
         if dll_path is None:
-            raise Exception("Could not find compiled NEURON .mod files. Their compilation failed or they "
+            print("Warning: Could not find compiled NEURON .mod files. Their compilation failed or they "
                             "are located somewhere else. Looked for "+target+" here (inc. sub-dirs): " + os.getcwd())
 
-        # Load the mod files from the binary
-        from neuron import h
-        h.nrn_load_dll(dll_path)
+        else:
+            # Load the mod files from the binary
+            from neuron import h
+            h.nrn_load_dll(dll_path)
 
 
-def _hoc2swc(hoc_path, mod_path, swc_path):
+def _hoc2swc(hoc_path, mod_path, swc_path, no_mod):
     if not os.path.exists(hoc_path):
         raise OSError("No such file or directory: " + hoc_path)
 
     if not os.path.exists(mod_path):
         raise OSError("No such file or directory: " + mod_path)
 
-    # Change to the dir where mod files are (to let NEURON auto-load the mod files)
-    with TransientCWD(mod_path):
-        compile_mod()
-        load_mod()
+    # If model does not have custom mod files (don't try to compile/load them)
+    if not no_mod:
+        # Change to the dir where mod files are (to let NEURON auto-load the mod files)
+        with TransientCWD(mod_path):
+            compile_mod()
+            load_mod()
 
     # Load the hoc file
     from neuron import h, gui
@@ -309,7 +312,7 @@ def swc_type_from_section_name(section_name):
     return "5"
 
 
-def hoc2swc(hoc_path, swc_path, mod_path=None, separate_process=True):
+def hoc2swc(hoc_path, swc_path, mod_path=None, separate_process=True, no_mod=False):
 
     # If not spec'd, assume mod files are in the hoc path
     if mod_path is None:
@@ -320,7 +323,7 @@ def hoc2swc(hoc_path, swc_path, mod_path=None, separate_process=True):
     # By running NEURON in a separate process, we ensure past HOC/MOD files will not affect later HOC files.
     if separate_process:
         from multiprocessing import Process
-        proc = Process(target=_hoc2swc, args=(hoc_path, mod_path, swc_path,))
+        proc = Process(target=_hoc2swc, args=(hoc_path, mod_path, swc_path, no_mod,))
         proc.start()
         proc.join()
         print('exit code', proc.exitcode)
@@ -328,7 +331,7 @@ def hoc2swc(hoc_path, swc_path, mod_path=None, separate_process=True):
             raise Exception("NEURON process crashed. See above for error details.")
 
     else:
-        _hoc2swc(hoc_path, mod_path, swc_path)
+        _hoc2swc(hoc_path, mod_path, swc_path, no_mod)
 
 
 

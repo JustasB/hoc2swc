@@ -6,6 +6,18 @@ def test_nonexistingHOC():
     with pytest.raises(Exception):
         hoc2swc.hoc2swc("XYZ/test.hoc", actual_swc)
 
+
+
+def test_noBeginTemplate():
+    actual_swc = "tests/testFiles/no-begintemplate/NoTemplate-temp.swc"
+    expected_swc = "tests/testFiles/no-begintemplate/NoTemplate.swc"
+
+    hoc2swc.hoc2swc("tests/testFiles/no-begintemplate/NoTemplate.hoc", actual_swc, no_mod=True)
+
+    assert os.path.exists(actual_swc)
+
+    assert os.system("diff -w " + actual_swc + " " + expected_swc) == 0
+
 def test_python_CA1():
     actual_swc = "tests/testFiles/ca1/CA1-temp.swc"
     expected_swc = "tests/testFiles/ca1/CA1.swc"
