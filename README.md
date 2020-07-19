@@ -4,7 +4,7 @@
 
 # hoc2swc: A Python package to convert NEURON cell HOC files to SWC morphology files
 
-[hoc2swc](https://pypi.org/project/hoc2swc/) is a Python library that converts the morphology of neuron models defined using [NEURON simulator](https://neuron.yale.edu) [HOC files](https://www.neuron.yale.edu/neuron/static/new_doc/programming/hocsyntax.html) to the popular [SWC morphology format](http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html). The library can also be used to convert cell morphologies instantiated in NEURON simulator (e.g. models that were build using NEURON+Python).
+[hoc2swc](https://pypi.org/project/hoc2swc/) is a Python library that converts the morphology of neuron models defined using [NEURON simulator](https://neuron.yale.edu) [HOC files](https://www.neuron.yale.edu/neuron/static/new_doc/programming/hocsyntax.html) to the popular [SWC morphology format](http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html). The library can also be used to convert cell morphologies instantiated in NEURON simulator (e.g. models that were built using NEURON+Python).
 
 Once converted to SWC, tools that can consume SWC files can be used to [compute SWC morphology metrics](https://pypi.org/project/pylmeasure/), create [professional 3D neuron morphology visualizations](https://github.com/MartinPyka/SWC2Blender), etc...
 
@@ -75,16 +75,14 @@ Surprisingly, [there is no easy way to save cell morphologies built using NEURON
 difficult to compute cell model morphology metrics using tools like [L-Measure](http://cng.gmu.edu:8080/Lm/), or use an [SWC viewer](https://neuroinformatics.nl/HBP/morphology-viewer/), which works with SWC
 files. It's possible to [import SWC files into NEURON](https://www.neuron.yale.edu/phpBB/viewtopic.php?t=3257), but not export. There is [NLMorphologyConverter](http://www.neuronland.org/NLMorphologyConverter/NLMorphologyConverter.html), but none of the versions available were able to convert any of the HOC files I tested.
 
-However, NEURON allows [saving cell morphology as NeuroML](https://www.neuron.yale.edu/phpBB/viewtopic.php?t=1926#p7019), which can be translated to SWC. To do this, a cell model
-must be initialized ("loaded") within NEURON, and then all the initialized cells can be saved as NeuroML using ModelView.
-This library then parses the NeuroML file and translates it to SWC.
+However, NEURON allows traversing all 3D points of an instantiated model. This can then be used to create the list of points for the SWC file.
 
 While this approach requires a running instance of NEURON, it avoids the need to write a NEURON HOC file parser --
-it simply leverages NEURON's HOC parser and NeuroML exporter. As a side effect, this approach also allows converting 
+it simply leverages NEURON's HOC parser and h.xyzdiam3d() methods. As a side effect, this approach also allows converting 
 NEURON cell model morphologies to SWC, even if HOC was not used to build the cell model (e.g. multiple 
 HOC files or a Python script).
 
-In theory, one could perform the above steps and implement a NeuroML->SWC converter on their own. However, this library has been packaged and made freely available to reduce the above effort to just a few lines of code. If you find any bugs with this library, and were prepared to implement your own converter, consider fixing the bug and submitting a pull-request instead -- it might be faster to fix a bug here than to write the converter from scratch.
+In theory, one could perform the above steps and implement a Neuron->SWC converter on their own. However, this library has been packaged and made freely available to reduce the above effort to just a few lines of code. If you find any bugs with this library, and were prepared to implement your own converter, consider fixing the bug and submitting a pull-request instead -- it might be faster to fix a bug here than to write the converter from scratch.
 
 # Issues
 If you encounter an issue, first make sure it's not due to NEURON itself -- this library simply interacts with the NEURON executables. If it is, please contact the [NEURON team](https://www.neuron.yale.edu/phpBB/). If the issue is with this library, please create an [issue on Github](https://github.com/JustasB/hoc2swc/issues).

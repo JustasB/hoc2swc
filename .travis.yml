@@ -7,7 +7,7 @@ before_install:
   - start_dir=$(pwd)
   - sudo apt-get update
   - sudo apt-get install libx11-dev libxt-dev gnome-devel
-  - sudo apt-get install mpich
+  - sudo apt-get install -y -q mpich libmpich-dev
   - sudo apt-get install libncurses-dev xfonts-100dpi
   - pip install --upgrade pip
   - pip install scipy numpy matplotlib cython mpi4py neuronpy
